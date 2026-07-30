@@ -285,12 +285,16 @@ let MUSIC_CHECKS = {}; // { childId: { "L-cat-N": {status, note} } }
 let ANNOUNCEMENTS = [];
 let METHODIST_NOTES = [];
 let TASKS = [];
+let DIARY = [];
+let ACHIEVEMENTS = {}; // { childId: [rows] }
+let CAL_EVENTS = [];
+const MOOD_EMOJIS = ["😊 Гоё өдөр","😍 Маш сайхан","🙂 Хэвийн","😐 Тайван","😔 Ядруу","😤 Хэцүү","🎉 Баярт өдөр","💪 Идэвхтэй","🌈 Урам зоригтой"];
 const TASK_CATEGORIES = ["Заах аргын нэгдлийн үйл ажиллагаа","Хүүхэд хамгаалал","Дотоод хяналт","Ёс зүйн зөвлөл","ХАБ","Архивын үйл ажиллагаа","Өмч хамгаалал","Эд хөрөнгийн тооллого","Цахим хөгжил","Нээлттэй үйл ажиллагаа","Эрдэм шинжилгээний илтгэл судалгаа","Бусад"];
 const AVATAR_EMOJIS = ["👦","👧","🧒","👶","🐻","🐼","🐨","🐯","🦁","🐶","🐱","🐰","🐭","🦊","🐹","🦄","🐸","🐵","🦉","🦋","🌸","🌺","🌻","🌈","⭐","🌟","☀️","🌙","🍎","🍓","🍒","🍭","🎈","🎀","🎵","🎶","🎸","🥁","🎺","🎻"];
 
 // ============ DATA LAYER (Supabase) ============
 async function loadAll() {
-  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes] = await Promise.all([
+  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes, drRes, achRes, ceRes] = await Promise.all([
     sb.from('lessons').select('*').order('created_at'),
     sb.from('plans').select('*').order('created_at'),
     sb.from('children').select('*').order('created_at'),
@@ -304,7 +308,10 @@ async function loadAll() {
     sb.from('music_criteria_checks').select('*'),
     sb.from('announcements').select('*').order('pinned', {ascending:false}).order('created_at', {ascending:false}),
     sb.from('methodist_notes').select('*').order('created_at', {ascending:false}),
-    sb.from('tasks').select('*').order('created_at', {ascending:false})
+    sb.from('tasks').select('*').order('created_at', {ascending:false}),
+    sb.from('diary').select('*').order('entry_date', {ascending:false}),
+    sb.from('achievements').select('*').order('earned_at', {ascending:false}),
+    sb.from('calendar_events').select('*').order('event_date')
   ]);
   MUSIC_CHECKS = {};
   for (const m of (mccRes.data||[])) {
@@ -314,6 +321,13 @@ async function loadAll() {
   ANNOUNCEMENTS = anRes.data || [];
   METHODIST_NOTES = (mnRes && mnRes.data) || [];
   TASKS = (tkRes && tkRes.data) || [];
+  DIARY = (drRes && drRes.data) || [];
+  ACHIEVEMENTS = {};
+  for (const a of ((achRes && achRes.data)||[])) {
+    if (!ACHIEVEMENTS[a.child_id]) ACHIEVEMENTS[a.child_id] = [];
+    ACHIEVEMENTS[a.child_id].push(a);
+  }
+  CAL_EVENTS = (ceRes && ceRes.data) || [];
   ATTENDANCE = {};
   for (const a of (atRes.data||[])) {
     if (!ATTENDANCE[a.child_id]) ATTENDANCE[a.child_id] = {};
@@ -432,6 +446,8 @@ function render() {
   else if (state.view === "announcements") body = renderAnnouncements();
   else if (state.view === "methodist") body = renderMethodist();
   else if (state.view === "tasks") body = renderTasks();
+  else if (state.view === "diary") body = renderDiary();
+  else if (state.view === "calendar") body = renderCalendar();
   else if (state.view === "summary") body = renderSummary();
   else if (state.view === "assessGroups") body = renderAssessGroups();
   else if (state.view === "assessChildren") body = renderAssessChildren();
@@ -565,6 +581,12 @@ function renderHome() {
       <div class="card c10" onclick="state.view='methodist';render()">
         <span class="element-icon">👔</span><h3>Арга зүйч, эрхлэгч</h3>
         <p>📖 Хяналт, зөвлөгөө, заавар</p></div>
+      <div class="card c1" onclick="state.view='diary';render()">
+        <span class="element-icon">📔</span><h3>Өдрийн тэмдэглэл</h3>
+        <p>Багшийн ажлын дэвтэр</p></div>
+      <div class="card c4" onclick="state.view='calendar';render()">
+        <span class="element-icon">🗓</span><h3>Хуанли</h3>
+        <p>Хичээл, тоглолт, үүрэг нэг дор</p></div>
     </div>`;
 }
 
@@ -1156,6 +1178,7 @@ function renderAssessChild(readonly) {
     { id:"result", name:"🏆 Үр дүн" },
     { id:"criteria", name:"✅ Шалгуур" },
     { id:"music", name:"🎵 Хөгжим шалгуур" },
+    { id:"achievements", name:"🌟 Ололт, авьяас" },
     { id:"graph", name:"📊 График" },
     { id:"chat", name:"💬 Зурвас" }
   ];
@@ -1164,6 +1187,7 @@ function renderAssessChild(readonly) {
   else if (tab === "result") content = renderEntryList(a.result, "result", null, readonly);
   else if (tab === "criteria") content = renderCriteria(child, readonly);
   else if (tab === "music") content = renderMusicCriteria(child, readonly);
+  else if (tab === "achievements") content = renderAchievements(child, readonly);
   else if (tab === "graph") content = renderChildGraph(child);
   else if (tab === "chat") content = renderChat(readonly);
   else if (tab === "progress") {
@@ -1316,6 +1340,71 @@ async function setMusicNote(childId, level, category, num, note) {
   } else return;
   await loadAll();
 }
+function renderAchievements(child, readonly) {
+  const items = ACHIEVEMENTS[child.id] || [];
+  const addBtn = readonly ? "" : `
+    <div style="margin-bottom:14px"><button class="btn" onclick="openAchievementModal('${child.id}')">➕ Ололт нэмэх</button></div>`;
+  const list = items.length===0 ? `<div class="empty">Ололт байхгүй байна</div>` :
+    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px">${items.map(a=>`
+      <div style="background:linear-gradient(135deg,#fef3c7,#fed7aa);border-radius:14px;padding:16px;position:relative">
+        <div style="font-size:36px;text-align:center">${escapeHTML(a.icon||'🌟')}</div>
+        <h4 style="text-align:center;margin-top:6px">${escapeHTML(a.title)}</h4>
+        ${a.description?`<p style="font-size:12px;color:#78350f;margin-top:6px;text-align:center">${escapeHTML(a.description)}</p>`:''}
+        <div style="text-align:center;font-size:11px;color:#92400e;margin-top:8px">📅 ${a.earned_at||''}</div>
+        ${a.media && a.media.length?`<div style="display:flex;justify-content:center;margin-top:8px">${a.media.map(m=>renderMediaItem(m)).join("")}</div>`:''}
+        ${readonly?'':`<button class="btn btn-danger btn-sm" style="position:absolute;top:6px;right:6px;padding:2px 8px;font-size:11px" onclick="deleteAchievement('${a.id}')">✕</button>`}
+      </div>`).join("")}</div>`;
+  return `${addBtn}${list}`;
+}
+function openAchievementModal(childId) {
+  const icons = ["🌟","⭐","🏆","🥇","🎖","🎵","🎤","🎹","🎸","🥁","🎺","🎻","💃","🎭","👑","💎","🌈","🎨","💪","🧠","❤️","🌺"];
+  const today = new Date().toISOString().substring(0,10);
+  showModal(`
+    <h3>🌟 Шинэ ололт бүртгэх</h3>
+    <form onsubmit="return saveAchievement(event,'${childId}')">
+      <div class="form-group"><label>Гарчиг (жишээ: "Гоцлол дуулж чадна", "Хэмнэл сайн")</label>
+        <input class="input" id="ac-title" required></div>
+      <div class="form-group"><label>Тайлбар</label>
+        <textarea class="input" id="ac-desc"></textarea></div>
+      <div class="form-group"><label>Огноо</label>
+        <input class="input" id="ac-date" type="date" value="${today}"></div>
+      <div class="form-group"><label>Дүрс сонго</label>
+        <input type="hidden" id="ac-icon" value="🌟">
+        <div id="ac-picked" style="text-align:center;font-size:36px;padding:10px;background:var(--bg);border-radius:10px;margin-bottom:8px">🌟</div>
+        <div style="display:grid;grid-template-columns:repeat(11,1fr);gap:4px">
+          ${icons.map(i=>`<button type="button" style="font-size:22px;padding:6px;background:white;border:2px solid transparent;border-radius:8px;cursor:pointer" onclick="document.getElementById('ac-icon').value='${i}';document.getElementById('ac-picked').textContent='${i}'">${i}</button>`).join("")}
+        </div></div>
+      <div class="form-group"><label>Зураг / бичлэг</label>
+        <input class="input" id="ac-media" type="file" accept="image/*,video/*"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="ac-save">🌟 Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveAchievement(e, childId) {
+  e.preventDefault();
+  const btn = document.getElementById("ac-save"); btn.disabled=true; btn.textContent="⏳...";
+  const media = [];
+  const file = document.getElementById("ac-media").files[0];
+  if (file) { const src = await uploadFile(file); if (src) media.push({ type: file.type.startsWith("video")?"video":"image", src, label: file.name }); }
+  await sb.from('achievements').insert({
+    child_id: childId,
+    title: document.getElementById("ac-title").value.trim(),
+    description: document.getElementById("ac-desc").value.trim(),
+    icon: document.getElementById("ac-icon").value,
+    earned_at: document.getElementById("ac-date").value,
+    media
+  });
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteAchievement(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('achievements').delete().eq('id', id);
+  await loadAll(); render();
+}
+
 function renderChildGraph(child) {
   const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
   const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === child.id));
@@ -1455,6 +1544,243 @@ async function toggleCriterion(childId, level, num) {
   }
   await loadAll(); render();
 }
+// ============ DIARY (ӨДРИЙН ТЭМДЭГЛЭЛ) ============
+function renderDiary() {
+  const isTeacher = state.role === 'teacher';
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Өдрийн тэмдэглэл</span></div>
+    <div class="toolbar">
+      <div><h2 class="section">📔 Багшийн өдрийн тэмдэглэл</h2>
+        <p class="section-desc" style="margin:0">${DIARY.length} бичлэг</p></div>
+      ${isTeacher?`<button class="btn" onclick="openDiaryModal()">➕ Шинэ бичлэг</button>`:''}
+    </div>
+    ${DIARY.length===0?`<div class="empty">Тэмдэглэл байхгүй байна</div>`:
+    `<div class="lesson-list">${DIARY.map(d=>`
+      <div class="lesson-item">
+        <div class="info">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+            <span style="background:linear-gradient(135deg,#fbcfe8,#ddd6fe);padding:3px 12px;border-radius:8px;font-size:12px;font-weight:600">📅 ${d.entry_date}</span>
+            ${d.mood?`<span style="font-size:14px">${escapeHTML(d.mood)}</span>`:''}
+          </div>
+          ${d.title?`<h4>${escapeHTML(d.title)}</h4>`:''}
+          ${d.text?`<div style="margin-top:6px;white-space:pre-wrap">${escapeHTML(d.text)}</div>`:''}
+          ${d.media && d.media.length?`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">${d.media.map(m=>renderMediaItem(m)).join("")}</div>`:''}
+          ${d.files && d.files.length?`<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+            ${d.files.map(f=>`<a href="${escapeAttr(f.src)}" target="_blank" style="padding:6px 10px;background:var(--bg);border-radius:6px;text-decoration:none;color:var(--accent);font-size:12px">📎 ${escapeHTML(f.label||f.src)}</a>`).join("")}
+          </div>`:''}
+        </div>
+        ${isTeacher?`<div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openDiaryModal('${d.id}')">Засах</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteDiary('${d.id}')">Устгах</button>
+        </div>`:''}
+      </div>`).join("")}</div>`}`;
+}
+function openDiaryModal(id) {
+  const d = id ? DIARY.find(x=>x.id===id) : null;
+  const today = new Date().toISOString().substring(0,10);
+  showModal(`
+    <h3>${d?"✏️ Засах":"📔 Шинэ тэмдэглэл"}</h3>
+    <form onsubmit="return saveDiary(event,'${id||''}')">
+      <div class="form-group"><label>📅 Огноо</label>
+        <input class="input" id="d-date" type="date" required value="${d?d.entry_date:today}"></div>
+      <div class="form-group"><label>🎭 Өдрийн уур амьсгал</label>
+        <select class="input" id="d-mood">
+          <option value="">— сонгоогүй —</option>
+          ${MOOD_EMOJIS.map(m=>`<option ${d&&d.mood===m?'selected':''}>${m}</option>`).join("")}
+        </select></div>
+      <div class="form-group"><label>📝 Гарчиг</label>
+        <input class="input" id="d-title" value="${d?escapeAttr(d.title||''):''}"></div>
+      <div class="form-group"><label>💭 Тэмдэглэл</label>
+        <textarea class="input" id="d-text" style="min-height:150px" placeholder="Өнөөдөр юу хийсэн, ямар үр дүнтэй байсан, юуг сайжруулах вэ...">${d?escapeHTML(d.text||''):''}</textarea></div>
+      <div class="form-group"><label>🖼 Зураг / бичлэг</label>
+        <input class="input" id="d-media" type="file" accept="image/*,video/*" multiple></div>
+      <div class="form-group"><label>📎 Файл</label>
+        <input class="input" id="d-files" type="file" multiple></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="d-save">💾 Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveDiary(e, id) {
+  e.preventDefault();
+  const btn = document.getElementById("d-save"); btn.disabled=true; btn.textContent="⏳ Хадгалж байна...";
+  const existing = id ? DIARY.find(x=>x.id===id) : null;
+  const media = existing ? [...(existing.media||[])] : [];
+  const files = existing ? [...(existing.files||[])] : [];
+  for (const f of document.getElementById("d-media").files) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  for (const f of document.getElementById("d-files").files) {
+    const src = await uploadFile(f);
+    if (src) files.push({ src, label: f.name });
+  }
+  const data = {
+    entry_date: document.getElementById("d-date").value,
+    mood: document.getElementById("d-mood").value || null,
+    title: document.getElementById("d-title").value.trim(),
+    text: document.getElementById("d-text").value.trim(),
+    media, files
+  };
+  if (id) await sb.from('diary').update(data).eq('id', id);
+  else await sb.from('diary').insert(data);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteDiary(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('diary').delete().eq('id', id);
+  await loadAll(); render();
+}
+
+// ============ CALENDAR (ХУАНЛИ) ============
+function renderCalendar() {
+  const now = state.calMonth ? new Date(state.calMonth) : new Date();
+  const year = now.getFullYear(), month = now.getMonth();
+  const first = new Date(year, month, 1);
+  const last = new Date(year, month+1, 0);
+  const startWday = (first.getDay()+6)%7; // Monday = 0
+  const daysInMonth = last.getDate();
+
+  // Gather all events for the month
+  const eventsByDate = {};
+  const addEvent = (dateStr, title, kind, color) => {
+    if (!dateStr) return;
+    const key = dateStr.substring(0,10);
+    if (!eventsByDate[key]) eventsByDate[key] = [];
+    eventsByDate[key].push({title, kind, color});
+  };
+  // Custom calendar events
+  CAL_EVENTS.forEach(e => addEvent(e.event_date, e.title, e.kind, e.color));
+  // Events (тоглолт)
+  EVENTS.forEach(e => addEvent(e.event_date, '🎭 '+e.title, 'event', '#ec4899'));
+  // Announcements with event_date
+  ANNOUNCEMENTS.filter(a=>a.event_date).forEach(a => addEvent(a.event_date, '📢 '+a.title, 'announce', '#f59e0b'));
+  // Tasks with due_date
+  TASKS.filter(t=>t.due_date).forEach(t => addEvent(t.due_date, '📌 '+t.title, 'task', t.completion_pct===100?'#10b981':'#8b5cf6'));
+  // Plans with period as date
+  for (const gid in PLANS) {
+    (PLANS[gid].lesson||[]).forEach(p => {
+      if (p.period) {
+        const m = p.period.match(/\d{1,2}\/\d{1,2}/);
+        if (m) {
+          const [mm,dd] = m[0].split('/');
+          const d = `${year}-${String(mm).padStart(2,'0')}-${String(dd).padStart(2,'0')}`;
+          addEvent(d, '🎵 '+p.title.substring(0,30), 'lesson', '#3b82f6');
+        }
+      }
+    });
+  }
+
+  const monthName = ["1-р сар","2-р сар","3-р сар","4-р сар","5-р сар","6-р сар","7-р сар","8-р сар","9-р сар","10-р сар","11-р сар","12-р сар"][month];
+  const weekdays = ["Ням","Мя","Лха","Пү","Ба","Бя","Ня"];
+  const wOrdered = ["Ня","Мя","Лха","Пү","Ба","Бя","Ням"]; // Monday first: actually let me use ["Дав","Мяг","Лха","Пү","Ба","Бя","Ня"]
+  const wnames = ["Дав","Мяг","Лха","Пү","Ба","Бя","Ня"];
+
+  const cells = [];
+  for (let i=0; i<startWday; i++) cells.push(null);
+  for (let d=1; d<=daysInMonth; d++) cells.push(d);
+  while (cells.length % 7 !== 0) cells.push(null);
+  const today = new Date().toISOString().substring(0,10);
+
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Хуанли</span></div>
+    <div class="toolbar">
+      <div>
+        <h2 class="section">🗓 ${year} · ${monthName}</h2>
+        <p class="section-desc" style="margin:0">Хичээл, тоглолт, үүрэг, зар мэдээ</p>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-secondary btn-sm" onclick="calNav(-1)">← Өмнөх</button>
+        <button class="btn btn-secondary btn-sm" onclick="state.calMonth=null;render()">Өнөөдөр</button>
+        <button class="btn btn-secondary btn-sm" onclick="calNav(1)">Дараах →</button>
+        ${state.role==='teacher'?`<button class="btn btn-sm" onclick="openCalEventModal()">➕ Үйл явдал</button>`:''}
+      </div>
+    </div>
+    <div style="background:white;border-radius:14px;padding:14px;box-shadow:var(--shadow);overflow-x:auto">
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;min-width:700px">
+        ${wnames.map(w=>`<div style="text-align:center;font-weight:700;font-size:12px;color:var(--muted);padding:8px">${w}</div>`).join("")}
+        ${cells.map(d => {
+          if (d === null) return `<div style="min-height:100px"></div>`;
+          const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+          const isToday = dateStr === today;
+          const evts = eventsByDate[dateStr]||[];
+          return `<div style="min-height:100px;background:${isToday?'linear-gradient(135deg,#fef3c7,#fed7aa)':'#fafafa'};border:1px solid var(--border);border-radius:8px;padding:6px;font-size:11px">
+            <div style="font-weight:700;color:${isToday?'#7c2d12':'var(--text)'};margin-bottom:4px">${d}${isToday?' 🌟':''}</div>
+            ${evts.slice(0,4).map(e=>`<div style="background:${e.color};color:white;padding:2px 5px;border-radius:4px;margin-bottom:2px;font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${escapeAttr(e.title)}">${escapeHTML(e.title.substring(0,30))}</div>`).join("")}
+            ${evts.length>4?`<div style="font-size:10px;color:var(--muted)">+${evts.length-4} өөр</div>`:''}
+          </div>`;
+        }).join("")}
+      </div>
+    </div>
+    ${state.role==='teacher'&&CAL_EVENTS.length?`
+      <div style="margin-top:20px">
+        <h3 style="font-size:14px;margin-bottom:10px">🗓 Гараар нэмсэн үйл явдлууд</h3>
+        <div class="lesson-list">${CAL_EVENTS.slice(0,10).map(e=>`
+          <div class="lesson-item">
+            <div class="info">
+              <div style="display:flex;gap:8px;align-items:center">
+                <span style="width:12px;height:12px;background:${e.color};border-radius:3px"></span>
+                <strong>${escapeHTML(e.title)}</strong>
+                <span style="color:var(--muted);font-size:12px">📅 ${e.event_date}${e.event_time?' · '+e.event_time:''}</span>
+              </div>
+              ${e.description?`<div style="font-size:13px;color:var(--muted);margin-top:4px">${escapeHTML(e.description)}</div>`:''}
+            </div>
+            <div class="actions">
+              <button class="btn btn-danger btn-sm" onclick="deleteCalEvent('${e.id}')">Устгах</button>
+            </div>
+          </div>`).join("")}</div>
+      </div>`:''}`;
+}
+function calNav(dir) {
+  const cur = state.calMonth ? new Date(state.calMonth) : new Date();
+  cur.setMonth(cur.getMonth() + dir);
+  state.calMonth = cur.toISOString();
+  render();
+}
+function openCalEventModal() {
+  const today = new Date().toISOString().substring(0,10);
+  showModal(`
+    <h3>🗓 Шинэ үйл явдал</h3>
+    <form onsubmit="return saveCalEvent(event)">
+      <div class="form-group"><label>Гарчиг</label><input class="input" id="ce-title" required></div>
+      <div class="form-group"><label>Огноо</label><input class="input" id="ce-date" type="date" required value="${today}"></div>
+      <div class="form-group"><label>Цаг</label><input class="input" id="ce-time" type="time"></div>
+      <div class="form-group"><label>Өнгө</label>
+        <select class="input" id="ce-color">
+          <option value="#3b82f6">🔵 Цэнхэр</option>
+          <option value="#ec4899">🩷 Розе</option>
+          <option value="#10b981">🟢 Ногоон</option>
+          <option value="#f59e0b">🟡 Шар</option>
+          <option value="#8b5cf6">🟣 Нил</option>
+          <option value="#dc2626">🔴 Улаан</option>
+        </select></div>
+      <div class="form-group"><label>Тайлбар</label><textarea class="input" id="ce-desc"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn">💾 Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveCalEvent(e) {
+  e.preventDefault();
+  await sb.from('calendar_events').insert({
+    title: document.getElementById("ce-title").value.trim(),
+    event_date: document.getElementById("ce-date").value,
+    event_time: document.getElementById("ce-time").value || null,
+    color: document.getElementById("ce-color").value,
+    description: document.getElementById("ce-desc").value.trim()
+  });
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteCalEvent(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('calendar_events').delete().eq('id', id);
+  await loadAll(); render();
+}
+
 // ============ TASKS (ҮҮРЭГ ДААЛГАВРЫН БИЕЛЭЛТ) ============
 function renderTasks() {
   const isTeacher = state.role === 'teacher';

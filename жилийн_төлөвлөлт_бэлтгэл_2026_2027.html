@@ -1,248 +1,206 @@
 <!DOCTYPE html>
 <html lang="mn"><head><meta charset="UTF-8">
-<title>БЭЛТГЭЛ БҮЛГИЙН — Жилийн төлөвлөлт 2026-2027</title>
+<title>Бэлтгэл бүлэг — Жилийн төлөвлөлт 2026-2027</title>
 <style>
   @page { size: A3 landscape; margin: 12mm; }
-  body { font-family: "Times New Roman", serif; color:#000; padding: 20px; font-size: 11px; line-height: 1.3; max-width: 1600px; margin: 0 auto; }
-  .toolbar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
-  .toolbar a, .toolbar button { padding:6px 12px; border:1px solid #444; border-radius:6px; text-decoration:none; color:#000; background:#fff; font-size:12px; cursor:pointer; font-family:inherit; }
-  .toolbar a.active { background:#111; color:#fff; }
-  .toolbar .dl { background:#059669; color:#fff; border-color:#059669; }
-  .batlav { text-align:right; margin-bottom: 20px; font-size:12px; }
+  body { font-family: "Times New Roman", serif; color:#000; padding: 20px; font-size: 11px; line-height: 1.3; }
   .head { text-align:center; margin-bottom: 20px; }
+  .head .batlav { text-align:right; margin-bottom: 20px; font-size:12px; }
   .head h1 { font-size: 15px; font-weight:bold; text-transform:uppercase; margin: 6px 0; }
+  .head h2 { font-size: 13px; font-weight:bold; margin: 4px 0; }
   .head .date { font-size: 12px; margin-top: 6px; }
   table { width:100%; border-collapse: collapse; font-size:10px; margin: 10px 0; }
   th, td { border:1px solid #000; padding:3px 4px; vertical-align:middle; text-align:center; }
   th { background:#e5e7eb; font-weight:bold; }
   .ai, .dai, .urdun { text-align:left; font-weight:600; }
   .urdun { font-size:9.5px; }
-  .n1 { background:#c6efce; }
-  .n2 { background:#9bc2e6; }
-  .u1 { background:#ffe699; }
-  .u2 { background:#f4b183; }
-  .bt { background:#d9d9d9; }
+  /* Legend colors */
+  .n1 { background:#c6efce; }   /* new knowledge 1st 14 хоног */
+  .n2 { background:#9bc2e6; }   /* new knowledge 2nd 14 хоног */
+  .u1 { background:#ffe699; }   /* уялдаа 1 */
+  .u2 { background:#f4b183; }   /* уялдаа 2 */
+  .bt { background:#d9d9d9; }   /* бататгал */
   .legend { margin-top: 20px; font-size:11px; }
   .legend div { display:flex; align-items:center; gap:8px; margin: 4px 0; }
   .legend .sw { display:inline-block; width:20px; height:14px; border:1px solid #000; }
   .note { margin-top:14px; font-size:11px; font-style:italic; }
   .sig { margin-top: 30px; font-size: 12px; text-align:right; }
-  @media print { body { padding: 0; } .toolbar, .no-print { display:none !important; } }
+  @media print { body { padding: 0; } }
 </style></head>
 <body>
 
-<div class="toolbar no-print">
-  <strong style="margin-right:8px">Түвшин:</strong>
-  <a href="#1" data-lvl="1" class="">I · Бага</a>
-  <a href="#2" data-lvl="2" class="">II · Дунд</a>
-  <a href="#3" data-lvl="3" class="">III · Ахлах</a>
-  <a href="#4" data-lvl="4" class="active">IV · Бэлтгэл</a>
-  <span style="flex:1"></span>
-  <button onclick="window.print()">🖨 Хэвлэх</button>
-  <button class="dl" onclick="downloadCurrent()">📥 Татаж авах</button>
+<div class="batlav">
+  БАТЛАВ<br>
+  АРГА ЗҮЙЧ:  ...................................<br>
+  2026 оны 09 сарын ...... өдөр
 </div>
 
-<div id="plan">
-    <div class="batlav">
-      БАТЛАВ<br>АРГА ЗҮЙЧ:  ...................................<br>2026 оны 09 сарын ...... өдөр
-    </div>
-    <div class="head">
-      <h1>БЭЛТГЭЛ БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ</h1>
-      <h1>2026-2027 ОНЫ ХИЧЭЭЛИЙН ЖИЛИЙН СУРГАЛТЫН ХӨТӨЛБӨР</h1>
-      <div class="date">7 хоногт 3 цаг · 2026 оны 09 сарын 01</div>
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th rowspan="3" style="width:90px">Ай</th>
-          <th rowspan="3" style="width:75px">Дэд ай</th>
-          <th rowspan="3" style="width:250px">Суралцахуйн үр дүн</th>
-          <th colspan="4">09 сар</th><th colspan="4">10 сар</th><th colspan="4">11 сар</th><th colspan="4">12 сар</th><th colspan="4">1 сар</th><th colspan="4">2 сар</th><th colspan="4">3 сар</th><th colspan="4">4 сар</th><th colspan="4">5 сар</th>
-        </tr>
-        <tr><th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th><th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th><th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th><th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th><th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th><th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th><th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th><th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th><th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th></tr>
-        <tr><th style="width:22px">1</th><th style="width:22px">2</th><th style="width:22px">3</th><th style="width:22px">4</th><th style="width:22px">5</th><th style="width:22px">6</th><th style="width:22px">7</th><th style="width:22px">8</th><th style="width:22px">9</th><th style="width:22px">10</th><th style="width:22px">11</th><th style="width:22px">12</th><th style="width:22px">13</th><th style="width:22px">14</th><th style="width:22px">15</th><th style="width:22px">16</th><th style="width:22px">17</th><th style="width:22px">18</th><th style="width:22px">19</th><th style="width:22px">20</th><th style="width:22px">21</th><th style="width:22px">22</th><th style="width:22px">23</th><th style="width:22px">24</th><th style="width:22px">25</th><th style="width:22px">26</th><th style="width:22px">27</th><th style="width:22px">28</th><th style="width:22px">29</th><th style="width:22px">30</th><th style="width:22px">31</th><th style="width:22px">32</th><th style="width:22px">33</th><th style="width:22px">34</th><th style="width:22px">35</th><th style="width:22px">36</th></tr>
-      </thead>
-      <tbody>
-        <tr>
-            <td class="ai">Хөгжмийн илэрхийлэл</td>
-            <td class="dai">Мэдрэх</td>
-            <td class="urdun">ХӨГ4.1а. Хөгжмийн энгийн зэмсгийг дуугаралтаар ялгаж, өнгө аясыг тодорхойлно.</td>
-            <td class="n1">ХӨГ4.1а</td><td class="u1">БНО4.1в</td><td class="n2">ХӨГ4.1а</td><td class="u2">ХЯ4.1а</td><td class="n1">ХӨГ4.1а</td><td class="u1">ХЯ4.1б</td><td class="n2">ХӨГ4.1а</td><td class="u2">НСХ4.1а</td><td class="n1">ХӨГ4.1а</td><td class="u1">БНО4.2д</td><td class="n2">ХӨГ4.1а</td><td class="u2">ХЭМ4.1г</td><td class="bt">ХӨГ4.1а</td><td class="u1">БНО4.2в</td><td class="n2">ХӨГ4.1а</td><td class="u2">ХЯ4.2в</td><td class="n1">ХӨГ4.1а</td><td class="u1">БНО4.1в</td><td class="n2">ХӨГ4.1а</td><td class="u2">ХЯ4.1а</td><td class="n1">ХӨГ4.1а</td><td class="u1">ХЯ4.1б</td><td class="bt">ХӨГ4.1а</td><td class="u2">НСХ4.1а</td><td class="n1">ХӨГ4.1а</td><td class="u1">БНО4.2д</td><td class="n2">ХӨГ4.1а</td><td class="u2">ХЭМ4.1г</td><td class="n1">ХӨГ4.1а</td><td class="u1">БНО4.2в</td><td class="n2">ХӨГ4.1а</td><td class="u2">ХЯ4.2в</td><td class="bt">ХӨГ4.1а</td><td class="u1">БНО4.1в</td><td class="bt">ХӨГ4.1а</td><td class="u2">ХЯ4.1а</td>
-          </tr><tr>
-            <td class="ai">Хөгжмийн илэрхийлэл</td>
-            <td class="dai">Илэрхийлэх</td>
-            <td class="urdun">ХӨГ4.1б. Дуу, аялгууг гарын дохиогоор дуулж, аялна.</td>
-            <td class="n1">ХӨГ4.1б</td><td class="u1">ХЯ4.1а</td><td class="n2">ХӨГ4.1б</td><td class="u2">ХЯ4.1б</td><td class="n1">ХӨГ4.1б</td><td class="u1">НСХ4.1а</td><td class="n2">ХӨГ4.1б</td><td class="u2">БНО4.2д</td><td class="n1">ХӨГ4.1б</td><td class="u1">ХЭМ4.1г</td><td class="n2">ХӨГ4.1б</td><td class="u2">БНО4.2в</td><td class="bt">ХӨГ4.1б</td><td class="u1">ХЯ4.2в</td><td class="n2">ХӨГ4.1б</td><td class="u2">БНО4.1в</td><td class="n1">ХӨГ4.1б</td><td class="u1">ХЯ4.1а</td><td class="n2">ХӨГ4.1б</td><td class="u2">ХЯ4.1б</td><td class="n1">ХӨГ4.1б</td><td class="u1">НСХ4.1а</td><td class="bt">ХӨГ4.1б</td><td class="u2">БНО4.2д</td><td class="n1">ХӨГ4.1б</td><td class="u1">ХЭМ4.1г</td><td class="n2">ХӨГ4.1б</td><td class="u2">БНО4.2в</td><td class="n1">ХӨГ4.1б</td><td class="u1">ХЯ4.2в</td><td class="n2">ХӨГ4.1б</td><td class="u2">БНО4.1в</td><td class="bt">ХӨГ4.1б</td><td class="u1">ХЯ4.1а</td><td class="bt">ХӨГ4.1б</td><td class="u2">ХЯ4.1б</td>
-          </tr><tr>
-            <td class="ai">Хөгжмийн илэрхийлэл</td>
-            <td class="dai">Илэрхийлэх</td>
-            <td class="urdun">ХӨГ4.1в. Аялгуу, хэмнэлийн дагуу хамтран хөгжимдөнө.</td>
-            <td class="n1">ХӨГ4.1в</td><td class="u1">ХЯ4.1б</td><td class="n2">ХӨГ4.1в</td><td class="u2">НСХ4.1а</td><td class="n1">ХӨГ4.1в</td><td class="u1">БНО4.2д</td><td class="n2">ХӨГ4.1в</td><td class="u2">ХЭМ4.1г</td><td class="n1">ХӨГ4.1в</td><td class="u1">БНО4.2в</td><td class="n2">ХӨГ4.1в</td><td class="u2">ХЯ4.2в</td><td class="bt">ХӨГ4.1в</td><td class="u1">БНО4.1в</td><td class="n2">ХӨГ4.1в</td><td class="u2">ХЯ4.1а</td><td class="n1">ХӨГ4.1в</td><td class="u1">ХЯ4.1б</td><td class="n2">ХӨГ4.1в</td><td class="u2">НСХ4.1а</td><td class="n1">ХӨГ4.1в</td><td class="u1">БНО4.2д</td><td class="bt">ХӨГ4.1в</td><td class="u2">ХЭМ4.1г</td><td class="n1">ХӨГ4.1в</td><td class="u1">БНО4.2в</td><td class="n2">ХӨГ4.1в</td><td class="u2">ХЯ4.2в</td><td class="n1">ХӨГ4.1в</td><td class="u1">БНО4.1в</td><td class="n2">ХӨГ4.1в</td><td class="u2">ХЯ4.1а</td><td class="bt">ХӨГ4.1в</td><td class="u1">ХЯ4.1б</td><td class="bt">ХӨГ4.1в</td><td class="u2">НСХ4.1а</td>
-          </tr><tr>
-            <td class="ai">Хөгжмийн илэрхийлэл</td>
-            <td class="dai">Бүтээх</td>
-            <td class="urdun">ХӨГ4.1г. Хэмнэл, хурд, өнгө аяст тохируулан хөдөлгөөнөө илэрхийлнэ.</td>
-            <td class="n1">ХӨГ4.1г</td><td class="u1">НСХ4.1а</td><td class="n2">ХӨГ4.1г</td><td class="u2">БНО4.2д</td><td class="n1">ХӨГ4.1г</td><td class="u1">ХЭМ4.1г</td><td class="n2">ХӨГ4.1г</td><td class="u2">БНО4.2в</td><td class="n1">ХӨГ4.1г</td><td class="u1">ХЯ4.2в</td><td class="n2">ХӨГ4.1г</td><td class="u2">БНО4.1в</td><td class="bt">ХӨГ4.1г</td><td class="u1">ХЯ4.1а</td><td class="n2">ХӨГ4.1г</td><td class="u2">ХЯ4.1б</td><td class="n1">ХӨГ4.1г</td><td class="u1">НСХ4.1а</td><td class="n2">ХӨГ4.1г</td><td class="u2">БНО4.2д</td><td class="n1">ХӨГ4.1г</td><td class="u1">ХЭМ4.1г</td><td class="bt">ХӨГ4.1г</td><td class="u2">БНО4.2в</td><td class="n1">ХӨГ4.1г</td><td class="u1">ХЯ4.2в</td><td class="n2">ХӨГ4.1г</td><td class="u2">БНО4.1в</td><td class="n1">ХӨГ4.1г</td><td class="u1">ХЯ4.1а</td><td class="n2">ХӨГ4.1г</td><td class="u2">ХЯ4.1б</td><td class="bt">ХӨГ4.1г</td><td class="u1">НСХ4.1а</td><td class="bt">ХӨГ4.1г</td><td class="u2">БНО4.2д</td>
-          </tr><tr>
-            <td class="ai">Хөгжмийн илэрхийлэл</td>
-            <td class="dai">Бүтээх</td>
-            <td class="urdun">ХӨГ4.1д. Дүрийн зан чанар, харилцааг илэрхийлж хамтран тоглоно.</td>
-            <td class="n1">ХӨГ4.1д</td><td class="u1">БНО4.2д</td><td class="n2">ХӨГ4.1д</td><td class="u2">ХЭМ4.1г</td><td class="n1">ХӨГ4.1д</td><td class="u1">БНО4.2в</td><td class="n2">ХӨГ4.1д</td><td class="u2">ХЯ4.2в</td><td class="n1">ХӨГ4.1д</td><td class="u1">БНО4.1в</td><td class="n2">ХӨГ4.1д</td><td class="u2">ХЯ4.1а</td><td class="bt">ХӨГ4.1д</td><td class="u1">ХЯ4.1б</td><td class="n2">ХӨГ4.1д</td><td class="u2">НСХ4.1а</td><td class="n1">ХӨГ4.1д</td><td class="u1">БНО4.2д</td><td class="n2">ХӨГ4.1д</td><td class="u2">ХЭМ4.1г</td><td class="n1">ХӨГ4.1д</td><td class="u1">БНО4.2в</td><td class="bt">ХӨГ4.1д</td><td class="u2">ХЯ4.2в</td><td class="n1">ХӨГ4.1д</td><td class="u1">БНО4.1в</td><td class="n2">ХӨГ4.1д</td><td class="u2">ХЯ4.1а</td><td class="n1">ХӨГ4.1д</td><td class="u1">ХЯ4.1б</td><td class="n2">ХӨГ4.1д</td><td class="u2">НСХ4.1а</td><td class="bt">ХӨГ4.1д</td><td class="u1">БНО4.2д</td><td class="bt">ХӨГ4.1д</td><td class="u2">ХЭМ4.1г</td>
-          </tr>
-      </tbody>
-    </table>
-    <div class="legend">
-      <strong>Тэмдэглэгээ:</strong>
-      <div><span class="sw n1"></span> Шинэ мэдлэг (эхний 14 хоног)</div>
-      <div><span class="sw n2"></span> Шинэ мэдлэг (сүүлийн 14 хоног)</div>
-      <div><span class="sw u1"></span> Уялдаа 1 (эхний 14 хоногийн)</div>
-      <div><span class="sw u2"></span> Уялдаа 2 (сүүлийн 14 хоногийн)</div>
-      <div><span class="sw bt"></span> Бататгал</div>
-    </div>
-    <div class="note">
-      Сарын төлөвлөлтийг 14 хоногоор буюу сард 2 удаа хийхээр төлөвлөж, 14 хоногтоо 2 шинэ мэдлэг олгохоор төлөвлөж хийсэн.<br>
-      Уялдаа холбоо: <strong>БНО</strong> — Байгаль нийгмийн орчин, <strong>ХЯ</strong> — Хэл яриа, <strong>НСХ</strong> — Нийгэм-сэтгэл хөдлөл, <strong>ХЭМ</strong> — Математик, <strong>ХӨГ</strong> — Хөгжим.
-    </div>
-    <div class="sig">ХӨТӨЛБӨР БОЛОВСРУУЛСАН: ХӨГЖМИЙН БАГШ <strong>Г.ӨЛЗИЙБАЯР</strong></div></div>
+<div class="head">
+  <h1>БЭЛТГЭЛ БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ</h1>
+  <h1>2026-2027 ОНЫ ХИЧЭЭЛИЙН ЖИЛИЙН СУРГАЛТЫН ХӨТӨЛБӨР</h1>
+  <div class="date">2026 оны 09 сарын 01</div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th rowspan="3" style="width:90px">Ай</th>
+      <th rowspan="3" style="width:75px">Дэд ай</th>
+      <th rowspan="3" style="width:230px">Суралцахуйн үр дүн</th>
+      <th colspan="4">09 сар</th>
+      <th colspan="4">10 сар</th>
+      <th colspan="4">11 сар</th>
+      <th colspan="4">12 сар</th>
+      <th colspan="4">1 сар</th>
+      <th colspan="4">2 сар</th>
+      <th colspan="4">3 сар</th>
+      <th colspan="4">4 сар</th>
+      <th colspan="4">5 сар</th>
+    </tr>
+    <tr>
+      <th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>
+      <th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>
+      <th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>
+      <th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>
+      <th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>
+      <th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>
+      <th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>
+      <th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>
+      <th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>
+    </tr>
+    <tr id="wkrow"></tr>
+  </thead>
+  <tbody id="body"></tbody>
+</table>
+
+<div class="legend">
+  <strong>Тэмдэглэгээ:</strong>
+  <div><span class="sw n1"></span> Шинэ мэдлэг (эхний 14 хоног)</div>
+  <div><span class="sw n2"></span> Шинэ мэдлэг (сүүлийн 14 хоног)</div>
+  <div><span class="sw u1"></span> Уялдаа 1 (эхний 14 хоногийн)</div>
+  <div><span class="sw u2"></span> Уялдаа 2 (сүүлийн 14 хоногийн)</div>
+  <div><span class="sw bt"></span> Бататгал</div>
+</div>
+
+<div class="note">
+  Сарын төлөвлөлтийг 14 хоногоор буюу сард 2 удаа хийхээр төлөвлөж, 14 хоногтоо 2 шинэ мэдлэг олгохоор төлөвлөж хийсэн.<br>
+  Уялдаа холбоо: <strong>БНО</strong> — Байгаль, нийгмийн орчин, <strong>ХЯ</strong> — Хэл яриа, <strong>НСХ</strong> — Нийгэм-сэтгэл хөдлөл, <strong>ХЭМ</strong> — Хэмжигдэхүүн (математик), <strong>ХӨГ</strong> — Хөгжим.
+</div>
+
+<div class="sig">
+  ХӨТӨЛБӨР БОЛОВСРУУЛСАН: ХӨГЖМИЙН БАГШ <strong>Г.ӨЛЗИЙБАЯР</strong>
+</div>
 
 <script>
-const CROSS = ["БНО4.1в","ХЯ4.1а","ХЯ4.1б","НСХ4.1а","БНО4.2д","ХЭМ4.1г","БНО4.2в","ХЯ4.2в"];
+// Week numbers row: 4 columns per month = week counters
+let wk = "";
+let counter = 1;
+for (let m = 0; m < 9; m++) {
+  for (let c = 0; c < 4; c++) {
+    wk += `<th style="width:24px">${counter++}</th>`;
+  }
+}
+document.getElementById("wkrow").innerHTML = wk;
 
-const LEVELS = {
-  1: {
-    title: "БАГА БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ",
-    hours: 2,
-    outcomes: [
-      { dai:"Мэдрэх", code:"ХӨГ1.1а", text:"Хүн, амьтны дуу авиаг ялган таньдаг болно." },
-      { dai:"Илэрхийлэх", code:"ХӨГ1.1б", text:"Дууг анхааралтай сонсож, зарим үг, авиаг дуурайн хэлж, аялна." },
-      { dai:"Бүтээх", code:"ХӨГ1.1в", text:"Дуу, аялгууны хэмнэлд тохируулан хөдөлгөөн хийнэ." }
+// 36 cells per row (9 months × 4). Pattern per 14-хоног (2 cells):
+// col1 = шинэ мэдлэг (n1 for I-14, n2 for II-14), col2 = уялдаа (u1/u2), also бататгал in some spots
+// Row definitions with code assignments
+const rows = [
+  {
+    ai: "Хөгжмийн илэрхийлэл", dai: "Мэдрэх",
+    urdun: "ХӨГ4.1а. Хөгжмийн энгийн зэмсгийг дуугаралтаар ялгаж, өнгө аясыг тодорхойлно.",
+    cells: [
+      // 09
+      "n1:ХӨГ4.1а","u1:БНО4.1в","n2:ХӨГ4.1а","u2:ХЯ4.1б",
+      // 10
+      "n1:ХӨГ4.1а","u1:БНО4.2д","n2:ХӨГ4.1а","u2:НСХ4.1а",
+      // 11
+      "n1:ХӨГ4.1а","u1:БНО4.1в","n2:ХӨГ4.1а","u2:ХЯ4.1а",
+      // 12
+      "bt:ХӨГ4.1а","u1:БНО4.1в","n2:ХӨГ4.1а","u2:НСХ4.1а",
+      // 1
+      "n1:ХӨГ4.1а","u1:ХЯ4.1б","n2:ХӨГ4.1а","u2:БНО4.2д",
+      // 2
+      "n1:ХӨГ4.1а","u1:БНО4.1в","bt:ХӨГ4.1а","u2:ХЯ4.1б",
+      // 3
+      "n1:ХӨГ4.1а","u1:НСХ4.1а","n2:ХӨГ4.1а","u2:БНО4.1в",
+      // 4
+      "n1:ХӨГ4.1а","u1:БНО4.2д","n2:ХӨГ4.1а","u2:ХЯ4.1а",
+      // 5
+      "bt:ХӨГ4.1а","u1:БНО4.1в","bt:ХӨГ4.1а","u2:НСХ4.1а"
     ]
   },
-  2: {
-    title: "ДУНД БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ",
-    hours: 2,
-    outcomes: [
-      { dai:"Мэдрэх", code:"ХӨГ2.1а", text:"Байгаль, эд юмсын дуу чимээг ялгана." },
-      { dai:"Илэрхийлэх", code:"ХӨГ2.1б", text:"Дууны аялгууг дагаж, аялна." },
-      { dai:"Илэрхийлэх", code:"ХӨГ2.1в", text:"Жигд хэмнэлийг мэдэрч, биеийн хөдөлгөөнөөр илэрхийлнэ." },
-      { dai:"Бүтээх", code:"ХӨГ2.1г", text:"Дуу, аялгуунд тохирсон хөдөлгөөн хийнэ." },
-      { dai:"Бүтээх", code:"ХӨГ2.1д", text:"Үлгэр зохиол, дуу хөгжмийн дүрд тоглоно." }
+  {
+    ai: "Хөгжмийн илэрхийлэл", dai: "Илэрхийлэх",
+    urdun: "ХӨГ4.1б. Дуу, аялгууг гарын дохиогоор дуулж, аялна.",
+    cells: [
+      "n1:ХӨГ4.1б","u1:ХЯ4.1а","n2:ХӨГ4.1б","u2:НСХ4.1а",
+      "n1:ХӨГ4.1б","u1:ХЯ4.1б","n2:ХӨГ4.1б","u2:БНО4.2в",
+      "n1:ХӨГ4.1б","u1:НСХ4.1а","n2:ХӨГ4.1б","u2:ХЯ4.1а",
+      "bt:ХӨГ4.1б","u1:НСХ4.1а","n2:ХӨГ4.1б","u2:ХЯ4.2в",
+      "n1:ХӨГ4.1б","u1:БНО4.1в","n2:ХӨГ4.1б","u2:ХЯ4.1а",
+      "n1:ХӨГ4.1б","u1:НСХ4.1а","bt:ХӨГ4.1б","u2:ХЯ4.1б",
+      "n1:ХӨГ4.1б","u1:ХЯ4.1а","n2:ХӨГ4.1б","u2:НСХ4.1а",
+      "n1:ХӨГ4.1б","u1:БНО4.1в","n2:ХӨГ4.1б","u2:ХЯ4.1б",
+      "bt:ХӨГ4.1б","u1:НСХ4.1а","bt:ХӨГ4.1б","u2:ХЯ4.1а"
     ]
   },
-  3: {
-    title: "АХЛАХ БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ",
-    hours: 2,
-    outcomes: [
-      { dai:"Мэдрэх", code:"ХӨГ3.1а", text:"Хөгжмийн энгийн зэмсгийн дуу чимээг ялган таньдаг болно." },
-      { dai:"Илэрхийлэх", code:"ХӨГ3.1б", text:"Богино үгтэй дууг аялгууны дагуу дуулна." },
-      { dai:"Илэрхийлэх", code:"ХӨГ3.1в", text:"Жигд ба жигд бус хэмнэлийг ялгана." },
-      { dai:"Бүтээх", code:"ХӨГ3.1г", text:"Аялгууны өөрчлөлтийг мэдэрч илэрхийлнэ." },
-      { dai:"Бүтээх", code:"ХӨГ3.1д", text:"Үлгэр зохиол, дуу, аялгууны дүрийг тоглоно." }
+  {
+    ai: "Хөгжмийн илэрхийлэл", dai: "Илэрхийлэх",
+    urdun: "ХӨГ4.1в. Аялгуу, хэмнэлийн дагуу хамтран хөгжимдөнө.",
+    cells: [
+      "n1:ХӨГ4.1в","u1:БНО4.1в","n2:ХӨГ4.1в","u2:ХЯ4.1а",
+      "n1:ХӨГ4.1в","u1:НСХ4.1а","n2:ХӨГ4.1в","u2:БНО4.1в",
+      "n1:ХӨГ4.1в","u1:ХЭМ4.1г","n2:ХӨГ4.1в","u2:ХЯ4.1а",
+      "bt:ХӨГ4.1в","u1:БНО4.1в","n2:ХӨГ4.1в","u2:НСХ4.1а",
+      "n1:ХӨГ4.1в","u1:ХЯ4.1а","n2:ХӨГ4.1в","u2:ХЭМ4.1г",
+      "n1:ХӨГ4.1в","u1:БНО4.1в","bt:ХӨГ4.1в","u2:НСХ4.1а",
+      "n1:ХӨГ4.1в","u1:ХЯ4.1а","n2:ХӨГ4.1в","u2:БНО4.1в",
+      "n1:ХӨГ4.1в","u1:НСХ4.1а","n2:ХӨГ4.1в","u2:ХЭМ4.1г",
+      "bt:ХӨГ4.1в","u1:БНО4.1в","bt:ХӨГ4.1в","u2:ХЯ4.1а"
     ]
   },
-  4: {
-    title: "БЭЛТГЭЛ БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ",
-    hours: 3,
-    outcomes: [
-      { dai:"Мэдрэх", code:"ХӨГ4.1а", text:"Хөгжмийн энгийн зэмсгийг дуугаралтаар ялгаж, өнгө аясыг тодорхойлно." },
-      { dai:"Илэрхийлэх", code:"ХӨГ4.1б", text:"Дуу, аялгууг гарын дохиогоор дуулж, аялна." },
-      { dai:"Илэрхийлэх", code:"ХӨГ4.1в", text:"Аялгуу, хэмнэлийн дагуу хамтран хөгжимдөнө." },
-      { dai:"Бүтээх", code:"ХӨГ4.1г", text:"Хэмнэл, хурд, өнгө аяст тохируулан хөдөлгөөнөө илэрхийлнэ." },
-      { dai:"Бүтээх", code:"ХӨГ4.1д", text:"Дүрийн зан чанар, харилцааг илэрхийлж хамтран тоглоно." }
+  {
+    ai: "Хөгжмийн илэрхийлэл", dai: "Бүтээх",
+    urdun: "ХӨГ4.1г. Хэмнэл, хурд, өнгө аяст тохируулан хөдөлгөөнөө илэрхийлнэ.",
+    cells: [
+      "n1:ХӨГ4.1г","u1:БНО4.2д","n2:ХӨГ4.1г","u2:ХЭМ4.1г",
+      "n1:ХӨГ4.1г","u1:НСХ4.1а","n2:ХӨГ4.1г","u2:БНО4.1в",
+      "n1:ХӨГ4.1г","u1:ХЯ4.1а","n2:ХӨГ4.1г","u2:ХЭМ4.1г",
+      "bt:ХӨГ4.1г","u1:БНО4.2д","n2:ХӨГ4.1г","u2:НСХ4.1а",
+      "n1:ХӨГ4.1г","u1:ХЭМ4.1г","n2:ХӨГ4.1г","u2:БНО4.1в",
+      "n1:ХӨГ4.1г","u1:НСХ4.1а","bt:ХӨГ4.1г","u2:ХЯ4.1а",
+      "n1:ХӨГ4.1г","u1:БНО4.1в","n2:ХӨГ4.1г","u2:ХЭМ4.1г",
+      "n1:ХӨГ4.1г","u1:НСХ4.1а","n2:ХӨГ4.1г","u2:БНО4.2д",
+      "bt:ХӨГ4.1г","u1:ХЭМ4.1г","bt:ХӨГ4.1г","u2:НСХ4.1а"
+    ]
+  },
+  {
+    ai: "Хөгжмийн илэрхийлэл", dai: "Бүтээх",
+    urdun: "ХӨГ4.1д. Дүрийн зан чанар, харилцааг илэрхийлж хамтран тоглоно.",
+    cells: [
+      "n1:ХӨГ4.1д","u1:ХЯ4.1а","n2:ХӨГ4.1д","u2:НСХ4.1а",
+      "n1:ХӨГ4.1д","u1:НСХ4.1а","n2:ХӨГ4.1д","u2:ХЯ4.1б",
+      "n1:ХӨГ4.1д","u1:БНО4.1в","n2:ХӨГ4.1д","u2:НСХ4.1а",
+      "bt:ХӨГ4.1д","u1:НСХ4.1а","n2:ХӨГ4.1д","u2:ХЯ4.2в",
+      "n1:ХӨГ4.1д","u1:ХЯ4.1а","n2:ХӨГ4.1д","u2:БНО4.1в",
+      "n1:ХӨГ4.1д","u1:НСХ4.1а","bt:ХӨГ4.1д","u2:ХЯ4.1а",
+      "n1:ХӨГ4.1д","u1:ХЯ4.1б","n2:ХӨГ4.1д","u2:НСХ4.1а",
+      "n1:ХӨГ4.1д","u1:БНО4.1в","n2:ХӨГ4.1д","u2:ХЯ4.1а",
+      "bt:ХӨГ4.1д","u1:НСХ4.1а","bt:ХӨГ4.1д","u2:ХЯ4.1б"
     ]
   }
-};
+];
 
-// Generate 36 cells (9 months × 4 columns) per row for a given code
-// Pattern per 14-хоног: col1=шинэ мэдлэг, col2=уялдаа. Also inject бататгал periodically.
-function generateCells(code, seed) {
-  const cells = [];
-  const lvl = code.match(/ХӨГ(\d)/)[1];
-  const crossByLvl = CROSS.map(c => c.replace(/^([А-Я]+)4/, `$1${lvl}`));
-  for (let m = 0; m < 9; m++) {
-    for (let half = 0; half < 2; half++) {
-      // Column 1 of the 14-хоног: new knowledge or бататгал
-      const isBt = (m === 3 && half === 0) || (m === 5 && half === 1) || (m === 8 && half === 0) || (m === 8 && half === 1);
-      cells.push({ cls: isBt ? "bt" : (half === 0 ? "n1" : "n2"), code });
-      // Column 2: уялдаа
-      const cross = crossByLvl[(seed + m*2 + half) % crossByLvl.length];
-      cells.push({ cls: half === 0 ? "u1" : "u2", code: cross });
-    }
+function renderRow(r) {
+  let tds = `<td class="ai">${r.ai}</td><td class="dai">${r.dai}</td><td class="urdun">${r.urdun}</td>`;
+  for (const c of r.cells) {
+    const [cls, code] = c.split(":");
+    tds += `<td class="${cls}">${code}</td>`;
   }
-  return cells;
+  return `<tr>${tds}</tr>`;
 }
-
-function render(level) {
-  const L = LEVELS[level];
-  const months = ["09 сар","10 сар","11 сар","12 сар","1 сар","2 сар","3 сар","4 сар","5 сар"];
-  let html = `
-    <div class="batlav">
-      БАТЛАВ<br>АРГА ЗҮЙЧ:  ...................................<br>2026 оны 09 сарын ...... өдөр
-    </div>
-    <div class="head">
-      <h1>${L.title}</h1>
-      <h1>2026-2027 ОНЫ ХИЧЭЭЛИЙН ЖИЛИЙН СУРГАЛТЫН ХӨТӨЛБӨР</h1>
-      <div class="date">7 хоногт ${L.hours} цаг · 2026 оны 09 сарын 01</div>
-    </div>
-    <table>
-      <thead>
-        <tr>
-          <th rowspan="3" style="width:90px">Ай</th>
-          <th rowspan="3" style="width:75px">Дэд ай</th>
-          <th rowspan="3" style="width:250px">Суралцахуйн үр дүн</th>
-          ${months.map(m => `<th colspan="4">${m}</th>`).join("")}
-        </tr>
-        <tr>${months.map(() => `<th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>`).join("")}</tr>
-        <tr>${Array.from({length:36}, (_,i)=>`<th style="width:22px">${i+1}</th>`).join("")}</tr>
-      </thead>
-      <tbody>
-        ${L.outcomes.map((o, i) => {
-          const cells = generateCells(o.code, i);
-          return `<tr>
-            <td class="ai">Хөгжмийн илэрхийлэл</td>
-            <td class="dai">${o.dai}</td>
-            <td class="urdun">${o.code}. ${o.text.replace(o.code+".","").trim()}</td>
-            ${cells.map(c => `<td class="${c.cls}">${c.code}</td>`).join("")}
-          </tr>`;
-        }).join("")}
-      </tbody>
-    </table>
-    <div class="legend">
-      <strong>Тэмдэглэгээ:</strong>
-      <div><span class="sw n1"></span> Шинэ мэдлэг (эхний 14 хоног)</div>
-      <div><span class="sw n2"></span> Шинэ мэдлэг (сүүлийн 14 хоног)</div>
-      <div><span class="sw u1"></span> Уялдаа 1 (эхний 14 хоногийн)</div>
-      <div><span class="sw u2"></span> Уялдаа 2 (сүүлийн 14 хоногийн)</div>
-      <div><span class="sw bt"></span> Бататгал</div>
-    </div>
-    <div class="note">
-      Сарын төлөвлөлтийг 14 хоногоор буюу сард 2 удаа хийхээр төлөвлөж, 14 хоногтоо 2 шинэ мэдлэг олгохоор төлөвлөж хийсэн.<br>
-      Уялдаа холбоо: <strong>БНО</strong> — Байгаль нийгмийн орчин, <strong>ХЯ</strong> — Хэл яриа, <strong>НСХ</strong> — Нийгэм-сэтгэл хөдлөл, <strong>ХЭМ</strong> — Математик, <strong>ХӨГ</strong> — Хөгжим.
-    </div>
-    <div class="sig">ХӨТӨЛБӨР БОЛОВСРУУЛСАН: ХӨГЖМИЙН БАГШ <strong>Г.ӨЛЗИЙБАЯР</strong></div>`;
-  document.getElementById("plan").innerHTML = html;
-  document.querySelectorAll(".toolbar a").forEach(a => a.classList.toggle("active", a.dataset.lvl === String(level)));
-  document.title = `${L.title.replace(/ХӨГЖМИЙН СУДЛАГДАХУУНЫ/,'').trim()} — Жилийн төлөвлөлт 2026-2027`;
-}
-
-function currentLevel() {
-  const h = parseInt(location.hash.replace("#","")) || 4;
-  return [1,2,3,4].includes(h) ? h : 4;
-}
-function downloadCurrent() {
-  const lvl = currentLevel();
-  const names = {1:"бага",2:"дунд",3:"ахлах",4:"бэлтгэл"};
-  const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
-  const blob = new Blob([html], {type:"text/html;charset=utf-8"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `жилийн_төлөвлөлт_${names[lvl]}_2026_2027.html`;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-window.addEventListener("hashchange", () => render(currentLevel()));
-render(currentLevel());
+document.getElementById("body").innerHTML = rows.map(renderRow).join("");
 </script>
 
 </body></html>

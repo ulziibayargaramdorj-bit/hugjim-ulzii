@@ -1,0 +1,2272 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>ХӨГЖИМ ӨЛЗИЙ СИСТЕМ</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #f7f8fa; --card: #ffffff; --text: #1a1a1a; --muted: #6b7280;
+    --border: #e5e7eb; --accent: #111827; --accent-hover: #374151; --danger: #dc2626;
+    --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
+  }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--bg); color: var(--text); min-height: 100vh; line-height: 1.5; }
+  .container { max-width: 1100px; margin: 0 auto; padding: 24px 16px; }
+  header { background: var(--card); border-bottom: 1px solid var(--border);
+    padding: 14px 20px; display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 10px; position: sticky; top: 0; z-index: 50; }
+  header h1 { font-size: 17px; font-weight: 600; letter-spacing: 0.3px; }
+  header nav { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .btn { background: var(--accent); color: white; border: none; padding: 10px 16px;
+    border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 500; transition: background 0.15s; font-family:inherit; }
+  .btn:hover { background: var(--accent-hover); }
+  .btn:disabled { opacity: 0.5; cursor: wait; }
+  .btn-secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-danger { background: transparent; color: var(--danger); border: 1px solid var(--border); }
+  .btn-danger:hover { background: #fef2f2; }
+  .btn-sm { padding: 6px 12px; font-size: 13px; }
+  .login-wrap { min-height: 100vh; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, #f7f8fa 0%, #eef0f4 100%); padding: 20px; }
+  .login-card { background: var(--card); padding: 40px 32px; border-radius: 16px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.06); width: 100%; max-width: 380px; text-align: center; }
+  .login-card h1 { font-size: 22px; margin-bottom: 6px; font-weight: 600; }
+  .login-card p { color: var(--muted); margin-bottom: 24px; font-size: 14px; }
+  .input { width: 100%; padding: 12px 14px; border: 1px solid var(--border);
+    border-radius: 8px; font-size: 15px; font-family: inherit; background: var(--card); color: var(--text); }
+  .input:focus { outline: none; border-color: var(--accent); }
+  .login-card .btn { width: 100%; margin-top: 10px; padding: 12px; }
+  .error { color: var(--danger); font-size: 13px; margin-top: 10px; min-height: 18px; }
+  .breadcrumb { display: flex; gap: 6px; align-items: center; margin-bottom: 20px;
+    color: var(--muted); font-size: 13px; flex-wrap: wrap; }
+  .breadcrumb a { color: var(--muted); text-decoration: none; cursor: pointer; }
+  .breadcrumb a:hover { color: var(--text); }
+  .breadcrumb .sep { opacity: 0.4; }
+  h2.section { font-size: 22px; font-weight: 600; margin-bottom: 6px; }
+  p.section-desc { color: var(--muted); margin-bottom: 20px; font-size: 14px; }
+  .grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 22px; cursor: pointer; transition: all 0.15s; box-shadow: var(--shadow); }
+  .card:hover { border-color: var(--accent); transform: translateY(-2px); }
+  .card h3 { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .card p { color: var(--muted); font-size: 13px; }
+  .card .badge { display: inline-block; background: var(--bg); padding: 2px 8px;
+    border-radius: 4px; font-size: 11px; color: var(--muted); margin-top: 10px; }
+  .lesson-list { display: flex; flex-direction: column; gap: 12px; }
+  .lesson-item { background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 16px 18px; display: flex; justify-content: space-between; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+  .lesson-item .info { flex: 1; min-width: 200px; }
+  .lesson-item h4 { font-size: 15px; font-weight: 600; margin-bottom: 4px; }
+  .lesson-item .meta { color: var(--muted); font-size: 13px; }
+  .lesson-item .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+  .materials { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+  .material { background: var(--bg); padding: 10px 14px; border-radius: 8px;
+    display: flex; justify-content: space-between; align-items: center; font-size: 13px; gap: 10px; }
+  .material .mtype { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .material a { color: var(--accent); text-decoration: none; word-break: break-all; }
+  .material a:hover { text-decoration: underline; }
+  .material .mcontent { flex: 1; min-width: 0; }
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+    display: flex; align-items: center; justify-content: center; z-index: 100; padding: 16px; }
+  .modal { background: var(--card); border-radius: 12px; padding: 24px;
+    width: 100%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+  .modal h3 { margin-bottom: 18px; font-size: 18px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 13px; margin-bottom: 6px; color: var(--muted); }
+  .form-group textarea { min-height: 80px; resize: vertical; }
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 20px; flex-wrap: wrap; }
+  .toolbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 12px; flex-wrap: wrap; }
+  .empty { text-align: center; padding: 50px 20px; color: var(--muted); }
+  .element-icon { font-size: 28px; margin-bottom: 10px; display: block; }
+  .loading { text-align: center; padding: 80px 20px; color: var(--muted); font-size: 14px; }
+  .spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; margin-right:8px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  select.input { appearance: auto; }
+  @media (max-width: 640px) {
+    .container { padding: 16px 12px; } header { padding: 12px 14px; }
+    header h1 { font-size: 15px; } .modal { padding: 20px; }
+  }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading"><span class="spinner"></span>Ачаалж байна...</div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script>
+// ============ CONFIG ============
+const SUPABASE_URL = "https://dehxrmupnbilwlxsovpi.supabase.co";
+const SUPABASE_KEY = "sb_publishable_VRNBeM9nqwFlrDhT2-wD3w_Gp3O85uy";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+const ELEMENTS = [
+  { id: "agu1", name: "1-р агуулга", icon: "①", desc: "Сонсох хөгжим · Хоолойны дасгал · Шинэ дуу" },
+  { id: "agu2", name: "2-р агуулга", icon: "②", desc: "Хоолойны дасгал · Давтах дуу · Хэмнэлт тоглоом" },
+  { id: "agu3", name: "3-р агуулга", icon: "③", desc: "Сонсох хөгжим · Хөгжимт хөдөлгөөн · Дүрд тоглох" },
+  { id: "agu4", name: "4-р агуулга", icon: "④", desc: "Сонсох хөгжим · Хэмнэл · Хэмнэлт дуу" }
+];
+const GROUPS = [
+  { id: "baga", name: "Бага бүлэг", age: "2-3 нас", hours: 2, level: "I түвшин · ХӨГ1" },
+  { id: "dund", name: "Дунд бүлэг", age: "3-4 нас", hours: 2, level: "II түвшин · ХӨГ2" },
+  { id: "ahlah", name: "Ахлах бүлэг", age: "4-5 нас", hours: 2, level: "III түвшин · ХӨГ3" },
+  { id: "beltgel", name: "Бэлтгэл бүлэг", age: "5-6 нас", hours: 3, level: "IV түвшин · ХӨГ4" },
+  { id: "duguilan", name: "Дугуйлан", age: "Сонирхогчид", hours: 2, level: "Нэмэлт" }
+];
+const MONTHS = ["9-р сар","10-р сар","11-р сар","12-р сар","1-р сар","2-р сар","3-р сар","4-р сар","5-р сар"];
+
+// Хүүхдийн хөгжлийн үнэлгээний шалгуур (СӨБ журам)
+const CRITERIA = {
+  1: {
+    "Мэдлэг": ["Чанаж болгоогүй хүнсийг идэж болохгүйг мэддэг.","Хүрээлэн байгаа орчноос болгоомжлох зүйлсийг таньдаг.","Зурагт номоос танил эд юмсыг нэрлэдэг.","Орчныхоо ургамал, амьтнаас заримыг нь нэрлэдэг.","Цаг агаарын үзэгдлийг таньж нэрлэдэг.","Өөрийн нэр, нас, биеийн эрхтнээ нэрлэдэг.","Үндэсний хувцас (дээл, гутал, малгай)-ыг нэрлэдэг.","Үндсэн гурван өнгийг нэрлэдэг.","Тоглоом, юмсын заасан байршил (дээр, доор)-ыг нэрлэдэг.","Болно, болохгүйг ойлгодог.","Бусдын нүүрний хувирал, гарын дохио, дуу авиа, үгээр илэрхийлсэн харилцааг ойлгодог."],
+    "Чадвар": ["1-2 саадыг сүлжиж алхдаг (10 метр зайд).","Хоорондоо 20 см зайтай байрлуулсан зураасны дундуур шулуун чиглэлээр гүйдэг.","20 см зайтай зураасны хооронд дөрвөн хөллөж мөлхдөг.","Хоёр хөл дээрээ үсэрч буудаг.","Тоглоом, юмс (бөмбөг, базсан цаас)-ыг тодорхой чиглэлд шидэж дамжуулдаг.","Гар, нүүр, шүдээ угаах, хоолой амаа зайлах үйлийг бусдын дэмжлэгтэй хийж чаддаг.","Хоолны хэрэгслийг зориулалтын дагуу хэрэглэдэг.","Бусдын яриаг сонсож ойлгоод, үг, үйлдэл, дохио зангаагаар харилцдаг.","Энгийн өгүүлбэрийг дуурайн хэлдэг.","Авиа, үгийг сонсоод давтан хэлдэг.","Ярилцах болон тоглох явцад асуулт асуухыг оролддог.","3 хүртэлх тоглоом, юмсыг тоолдог.","Том, жижгийг ялгадаг.","Юмсыг нэг ижил шинжээр нь ангилдаг.","Харандаагаар мөр, зураас гаргадаг.","Бусдын үйлийг ажиглаж дуурайдаг.","Бэлдэц дүрс ашиглан бусдын дэмжлэгтэй наамал хийдэг.","Хэв ашиглан хэлбэр гаргадаг.","Тоглоом, эд юмсыг бусдын дэмжлэгтэй өрдөг.","Өөрийн хэрэгцээ, биеийн зарим мэдрэмжээ нүүрний хувирал, биеийн хөдөлгөөн, үгээр илэрхийлдэг.","Хүн, амьтны дуу авиаг сонсоод ялгадаг.","Дуу, хөгжмийн хэмнэлийг хөдөлгөөн (алга таших, өвдөг цохих)-өөр илэрхийлдэг."],
+    "Төлөвшил": ["Бусдын бүтээлийг ажиглаж сонирхдог.","Хогийг хогийн саванд хийдэг.","Өөр хэн нэгэн аргадах (уурлаж тавгүйтсэн, уйлсан үед)-д тайвширдаг.","Хэрэглэсэн эд зүйл, тоглоомоо хураадаг."]
+  },
+  2: {
+    "Мэдлэг": ["Гэмтэж болзошгүй үйлдлийг ойлгодог.","Хоорондоо хамааралтай хоёр юмыг таньдаг.","Орчиндоо байгаа зурган тэмдэглэгээ (гэрлэн дохио, гарц гэх мэт)-г ойлгодог.","Таван хошуу мал, гэрийн тэжээмэл амьтны үр төлийг нэрлэдэг.","Үндэсний баяр ёслолын зарим үйл (золгох, бөх барилдах)-ийг нэрлэдэг.","Дараалан байрлуулсан тоглоом, дүрс, юмсыг ажиглаж, зүй тогтлыг тайлбарладаг.","Тоглоом, юмсын байршил (дотор, гадна)-ыг нэрлэдэг.","Уран зураг, баримлын бүтээлд юу дүрсэлснийг нэрлэдэг."],
+    "Чадвар": ["Сэтгэл хөдлөлөө үг, эсвэл үйлдлээр илэрхийлдэг.","Өөрийн хийх дуртай болон дургүй зүйлсээ илэрхийлдэг.","Алхалтын үед гарын хөдөлгөөнийг өөрчилж (гараа алдлах, өргөх) гүйцэтгэдэг.","Хоорондоо 15 см зайтай байрлуулсан зураасны дундуур шулуун чиглэлээр гүйдэг.","Зааврын дагуу 2-3 саадыг сүлжиж мөлхдөг (10 метр зайд).","Хоёр хөл дээрээ 5 хүртэлх зураас дээгүүр давж үсэрдэг.","0.5-1 метр зайнаас шидсэн тоглоом, бөмбөг барьж авдаг.","Зааврын дагуу өдөр тутмын хувийн ариун цэвэрийг бие даан гүйцэтгэдэг.","Жимс, хүнсний ногоог насанд хүрэгчдийн тусламжтай угаадаг.","3-4 үгтэй өгүүлбэрийг давтаж хэлдэг.","Сургалт, үйл ажиллагаанд оролцох, хамтдаа тоглох явцад асуулт асуудаг.","Яриандаа өнгө, хэмжээ, тоо ширхэг заасан үгсийг хэрэглэдэг.","5 хүртэл тоглоом, юмсыг тоолдог.","Олон ба цөөн тооны тоглоом, юмсыг зааж хэлдэг.","3 хүртэлх тооны юмсыг уртаар нь харьцуулдаг.","Тоглоомыг 2 ижил шинж (өнгө, дүрс, хэмжээ)-ээр ангилдаг.","Байгалийн үзэгдлийг ажиглаж, санаа бодлоо илэрхийлдэг.","Өөрийн болон гэр бүлийн гишүүдийн талаар ярьдаг.","Хялбар, ойлгомжтой заавар, дүрмийг ойлгож тайлбарладаг.","Өөрийн дуртай зүйлээ зурж (зураас, толбо, дардас) дүрсэлдэг.","Баримлын шавраар хоёр хэсгээс бүтсэн зүйлийг бие даан барьдаг.","Бэлдэц дүрс ашиглан багшийн заавраар наамал хийдэг.","Тоглоом, эд юмс (блокон тоглоом, шагай)-ыг бие даан бүтээл хийж, тайлбарладаг.","Байгаль, эд юмсын дуу чимээг сонсоод ялгадаг.","Тоглоом, хэрэглэгдэхүүн ашиглан аялгуунд тохируулж жигд хэмнэлээр дуугаргадаг.","Хэмнэл, аянд тохирсон хөдөлгөөн хийдэг.","Үлгэр, зохиолын танил дүрд тоглодог."],
+    "Төлөвшил": ["Хооллож дууссаны дараа хоолны хэрэгслийг хураадаг.","Бусдад өөрийн санаачилгаар тусалдаг.","Бусадтай хамтран үйл ажиллагаанд оролцдог.","Энгийн заавар, дүрэм (ус хэмнэх, хогийг ангилж хаях)-ийг биелүүлдэг.","Тасалгааны ургамлын тоосыг арчиж, усалдаг.","Дууг бусадтай хамтран дуулдаг."]
+  },
+  3: {
+    "Мэдлэг": ["Эрүүл мэндэд тустай хоол, хүнсийг нэрлэдэг.","Өөрийн болон бусдын биеийн хүрч болох, болохгүй хэсгийг мэддэг.","Ухаалаг төхөөрөмжийг зохистой хэрэглэхийг мэддэг.","Сэтгэл хөдлөл илэрхийлсэн 2-3 зургаас таатай, таагүй байгааг тайлбарладаг.","Тайвшрахад туслах аргуудыг мэддэг.","Хоёр зүйлийн хоорондын хамаарлыг тайлбарладаг.","10 хүртэл цээжээр тоолдог."],
+    "Чадвар": ["Гүйж явахдаа чиглэлээ өөрчилдөг.","Вандан сандал дээгүүр алхдаг.","5-6 саадыг сүлжиж гүйдэг (10 метр зайд).","4 хөллөж элгээр мөлхдөг.","20 см өндөртэй тавцан дээрээс үсэрч буудаг.","1-1.5 метр зайнаас шидсэн бөмбөгийг барьж авдаг.","Өөрийн ая тухай, сэтгэл хөдлөлөө үг, үйлдлээр илэрхийлдэг.","Өөрийн дуртай зүйлийн шалтгааныг тайлбарладаг.","Хүн, амьтны хоолны бэлтгэлд оролцдог.","Хоолны хэрэгслийг угаах, ширээ хураах үйлд оролцдог.","Үгийг сонсоод, урт ба богино авианы дуудлагыг ялган дуурайдаг.","Тоглоом, юмсын 2-3 онцлог шинжийг тоочиж ярьдаг.","Юмсын учир шалтгааныг өөрийн ойлгосноор тайлбарладаг.","Ном, үлгэр, зохиолын гол санааг ойлгож, үйл явдлыг тайлбарладаг.","5 хүртэлх тооны юмсыг оноож тоолдог.","Дараалан байрлуулсан тоглоом, дүрс, юмсыг ажиглаж, зүй тогтлыг үргэлжлүүлдэг.","Юмсыг хэмжээ (урт, хүнд)-гээр нь харьцуулдаг.","Өглөө, өдөр, орой хийдэг үйл явдлыг харуулсан 4 зургийг зөв дараалалд оруулдаг.","Тоглоом, эд юмсыг нэг шинжээр нь 4 хүртэлх хэсэгт ангилдаг.","Дугуй, дөрвөлжин, гурвалжин дүрсийг ялган нэрлэдэг.","Дүрс ба биетийг ялгадаг.","Зурган зааварчилгааг ойлгож тайлбарладаг.","Амьтдын амьдрах орчныг ялгадаг.","Цаг агаарын байдалд тохируулан хувцаслаж, үйл ажиллагаанд оролцдог.","Зураг бүтээлээ толбо, дардсаар чимэглэдэг.","Хүн, амьтан, эд юмсыг өөрийн төсөөллөөр зохиомжлон барьдаг.","Биет наамал урладаг.","Өрж байгуулдаг, эвлүүлж угсрах тоглоомоор зохион бүтээдэг.","Дууг ая хэмнэлийн дагуу дуулдаг.","Хэмнэлийн өөрчлөлтийг мэдэрч, хөгжмийн энгийн зэмсгээр тоглодог.","Ая, хэмнэл солигдоход хөдөлгөөнөө тохируулдаг.","Үлгэр зохиолын дүрээс сонгон онцлог шинжийг илэрхийлдэг."],
+    "Төлөвшил": ["Бусдын сэтгэлийн хөдөлгөөн өөр өөр байдгийг мэдэн зохицож харилцдаг.","Бусадтай тоглоом, наадгай, эд зүйлсээ хуваалцан хамтарч тоглодог.","Өдөр тутмын үйл ажиллагаанд бие даан оролцдог.","Харилцан ярианд идэвх санаачилга (тодруулах асуулт асуух, санаагаа илэрхийлэх)-тай оролцдог.","Тасалгааны ургамлыг арчлахад оролцдог.","Үндэсний тоглоом, наадгайгаар тоглодог (шагай, хөлөгт тоглоом)."]
+  },
+  4: {
+    "Мэдлэг": ["Аюултай нөхцөлд (галаас хол байх, шатаар болгоомжтой явах) юу хийхийг мэддэг.","Хүмүүсийн хоорондын харилцаа хэрхэн өрнөж байгааг ойлгодог.","20 хүртэл цээжээр тоолдог.","Долоо хоногийн гарагийг дарааллаар нь нэрлэдэг.","Тоглоом, юмсын ижил ба ялгаатай шинжийг нэрлэдэг.","Ургамлын ургалтад хэрэгтэй зүйлийг нэрлэдэг.","Улирлын онцлог хүмүүсийн амьдралд хэрхэн нөлөөлж байгааг тайлбарладаг.","Уран зураг, уран баримлын бүтээлийг хайрлан хамгаалахыг мэддэг."],
+    "Чадвар": ["Вандан сандал дээгүүр алхахдаа гарын хөдөлгөөн (гараа алдлах, өргөх)-ийг хослуулдаг.","7-8 саадыг сүлжиж гүйдэг (10 метр зайд).","Вандан сандал дээр элгээр гулсаж мөлхдөг.","30 см өндөртэй тавцан дээрээс техникийн дагуу үсэрч буудаг.","1.5-2 метр зайд байгаа хүүхдэд бөмбөгийг газарт ойлгож өгөх, барьж авдаг.","Тодорхой үйл, үйлдлийг хийж чадах, чадахгүй шалтгаанаа тайлбарладаг.","Өөрийн хэрэгцээгээ илэрхийлдэг.","Гэр бүлийн гишүүдээ танилцуулж, ажил хөдөлмөрт нь хэрхэн тусалдаг талаар тайлбарлан ярьдаг.","Тайвшрахад туслах аргуудыг багшийн тусламжтай хэрэглэдэг.","Нэрлэсэн үгийн эхэнд ба төгсгөлд орсон авиаг ялгадаг.","Ном болон үлгэр, зохиол, болсон үйл явдлыг дэс дараатай тайлбарладаг.","Үлгэр зохиолын төгсгөлийг өөрийн төсөөллөөр үргэлжлүүлэн зохиож ярьдаг.","Өөрийн нэрийн дармал үсгийг дагуулж бичдэг.","10 хүртэлх эд юмсыг оноож тоолдог.","Өгөгдсөн тооноос 20 дотор нэгээр нэмэгдүүлж, хорогдуулж тоолдог.","10 хүртэлх тооны дарааллаас орхигдсон 1-2 тоог олдог.","Нэг юмсын байрлалаар нөгөө юмсын байрлалыг тодорхойлдог.","Юмсын хэмжээ (урт, хүнд, багтаамж)-гээр нь таамаглан харьцуулдаг.","Юмсыг шинж чанараар нь бүлэглэн учрыг тайлбарладаг.","Сэдвийн хүрээнд үйл явдал (байгалийн үзэгдэл, үлгэр)-ыг бүтээлчээр зохиомжлон зурдаг.","Баримлын шавар, байгалийн материал зэргээр сэдэвт баримал барьдаг.","Өгөгдсөн сэдвийн хүрээнд наамал хийдэг.","Эд зүйлсээр юмсыг зохиомжлон бүтээж, дүрслэлийг баяжуулдаг.","Хөгжмийн энгийн зэмсгийг дуугаралтаар нь ялгаж нэрлэдэг.","Гарын дохионы дагуу дууны өндөрлөг, хурдыг зохицуулан дуулдаг.","Хөгжмийн энгийн зэмсгээр аялгууны хэмнэлд нийцүүлэн хөгжимддөг.","Хөгжмийн аялгуунд нийцсэн хөдөлгөөн хийдэг."],
+    "Төлөвшил": ["Хувийн ариун цэвэр сахихын ач холбогдлыг ойлгож, тогтмол дагаж мөрддөг.","Хоол хүнс, зууш бэлтгэхэд өөрийн хэмжээнд оролцож тусалдаг.","Бохирдсон хоолны хэрэгслийг насанд хүрэгчидтэй хамтран цэвэрлэдэг.","Ухаалаг төхөөрөмжийг хэрэглэх үедээ бусдын заавар, дүрмийг мөрддөг.","Тоглоомын дүрэм баримтлан хамтран тоглодог.","Гэр бүл, цэцэрлэг, анги, олон нийтийн газарт тогтсон дүрмийг баримталдаг.","Өөрийнх нь үйлдэл бусдын сэтгэлийн хөдөлгөөнд нөлөөлж буйг мэдэж зохицон харилцдаг.","Харилцан ярианд идэвх санаачилга (асуулт асуух)-тай оролцдог.","Амьтдыг хайрлан хамгаалдаг.","Бусдын сонирхол, ялгаатай байдалд хүндэтгэлтэй ханддаг.","Орчиндоо хариуцлагатай байж, хог ангилж, байгаль бохирдуулахгүй байх үйлийг хийдэг.","Үндэсний соёл, зан заншлын зарим үйлийг бие даан болон найз нөхөдтэйгээ хамтран хийдэг.","Дүрийн зан чанарын талаар харилцан ярилцдаг."]
+  }
+};
+// Хөгжмийн тусгай шалгуур — СӨБ шинэчилсэн хөтөлбөрийн Мэдрэх/Илэрхийлэх/Бүтээх дэд ай-гаар
+const MUSIC_CRITERIA = {
+  1: { // I түвшин (Бага) — ХӨГ1.1а-в
+    "Мэдрэх (сонсох, ялгах)": [
+      "Хүн, эрэгтэй, эмэгтэй, ахмад настны дуу хоолойг ялгадаг",
+      "Нохой, муур, гахай, шувуу зэрэг амьтдын дуу чимээг таньдаг",
+      "Чанга, сул дуу авиаг ялган мэдэрдэг",
+      "Хөгжим, дууг анхааралтай сонсдог"
+    ],
+    "Илэрхийлэх (дуулах, дуурайх)": [
+      "Дууг сонсоод зарим үгийг дагаж хэлдэг",
+      "Дууны аяыг дагаж аялдаг, бувтнадаг",
+      "Ми1-Ля1 эгшгийн цараанд дуурайн дуугардаг",
+      "Амьтан, эд юмсын дуу авиаг дуурайдаг"
+    ],
+    "Бүтээх (хөдөлгөөн, тоглоом)": [
+      "Хөгжмийн аянд алга таших, ширээ товших хөдөлгөөн хийдэг",
+      "Багшийг даган хөдлөх, найгах, эргэх үйл хийдэг",
+      "Хөгжимт тоглоомд идэвхтэй оролцож хөгжилддөг",
+      "Хамтдаа богино дуу дуулж хөгжилдөх оролдлого хийдэг"
+    ]
+  },
+  2: { // II түвшин (Дунд) — ХӨГ2.1а-д
+    "Мэдрэх (сонсох, ялгах)": [
+      "Байгаль, эд юмсын дуу чимээг ялган нэрлэдэг",
+      "Ая, дуу хөгжмийг анхааралтай сонсдог",
+      "Хэмнэлийн урт, богиныг мэдрэн ялгадаг",
+      "Хөгжмийн зэмсгийн дууг таньж нэрлэдэг",
+      "Дуу авианы бүдүүн, нарийныг ялгадаг"
+    ],
+    "Илэрхийлэх (дуулах, хөдөлгөөн)": [
+      "Дууны аялгууг дагаж, үгийг тод хэлж дуулдаг",
+      "Жигд хэмнэлийг алга ташилтаар илэрхийлдэг",
+      "Хөгжимд тааруулан биеийн хөдөлгөөн хийдэг",
+      "Хамтарч дуулахдаа дэг журам баримталдаг",
+      "Хөгжимт хөдөлгөөнийг даган дуурайдаг"
+    ],
+    "Бүтээх (дүрд тоглох, зохиох)": [
+      "Үлгэр зохиолын танил дүрд тоглодог",
+      "Хөгжмийн зэмсгээр аяа зохион дуугаргадаг",
+      "Хөгжимд тохирсон хөдөлгөөн санаачилдаг",
+      "Дуу хөгжимд сэтгэлийн хөдлөлөө нүүр, хөдөлгөөнөөр илэрхийлдэг"
+    ]
+  },
+  3: { // III түвшин (Ахлах) — ХӨГ3.1а-д
+    "Мэдрэх (сонсох, ялгах)": [
+      "Хөгжмийн энгийн зэмсгийн дуу чимээг ялган таньдаг",
+      "Дууны өндөр/нам, чанга/зөөлөнг ялгадаг",
+      "Жигд ба жигд бус хэмнэлийг мэдэрч ялгадаг",
+      "Аялгууны өөрчлөлтийг сонсоод илрүүлдэг",
+      "Хурдан, удаан хэмнэлийг ялгадаг"
+    ],
+    "Илэрхийлэх (дуулах, хөгжимдөх)": [
+      "Богино үгтэй дууг ая хэмнэлийн дагуу дуулдаг",
+      "Хөгжмийн энгийн зэмсгээр хэмнэл тоглодог",
+      "Хамсраагүй, хамтран зэрэг дуулдаг",
+      "Хөгжмийн ая, хэмнэлд тохирсон хөдөлгөөн хийдэг",
+      "Дууны үгийг тод, ойлгомжтой хэлдэг"
+    ],
+    "Бүтээх (дүрд тоглох, зохиох)": [
+      "Үлгэр зохиолын дүрд оролцож, дүрийн онцлогийг харуулдаг",
+      "Аялгуунд тохируулсан хөдөлгөөн санаачилдаг",
+      "Хөгжмийн зэмсгээр богино аяз зохиодог",
+      "Тухайн дүрийн зан чанарын онцлогийг илэрхийлдэг",
+      "Багаараа урлагийн үзвэрт оролцдог"
+    ]
+  },
+  4: { // IV түвшин (Бэлтгэл) — ХӨГ4.1а-д
+    "Мэдрэх (сонсох, ялгах)": [
+      "Хөгжмийн энгийн зэмсгийг дуугаралтаар ялгаж, өнгө аясыг тодорхойлдог",
+      "Дууны өндөр/нам, чанга/зөөлөн, хурдан/удаан ялган таньдаг",
+      "Ялгаатай зэмсгийн дууг сонсоод нэрлэдэг",
+      "Танил биш аяыг сонсоод хэмнэлийг таньдаг",
+      "Аялгууны өнгө аяс (баяр, гуниг, тайван)-ыг мэдэрч сэтгэгдэлээ илэрхийлдэг"
+    ],
+    "Илэрхийлэх (дуулах, хөгжимдөх, хөдлөх)": [
+      "Дуу, аялгууг гарын дохиогоор дуулж аялдаг",
+      "Аялгуу, хэмнэлийн дагуу хамтран хөгжимддөг",
+      "Хэмнэл, хурд, өнгө аяст тохируулан хөдөлгөөн хийдэг",
+      "Ре1-До2 эгшгийн цараанд өнгө аясыг дагуулан дуулдаг",
+      "Хамтлагаар болон гоцлон дуулж, тайлант тоглолтод оролцдог",
+      "Хөгжмийн дэг журам баримталж, бусадтай хамтарч тоглодог"
+    ],
+    "Бүтээх (дүрд тоглох, зохиох)": [
+      "Дүрийн зан чанар, харилцааг илэрхийлж хамтран тоглодог",
+      "Хосолсон хэмнэл (удаан + хурдан) зохиож тоглодог",
+      "Дуу, хөгжмийн агуулгыг нүүрний хувирал, хөдөлгөөнөөр илэрхийлдэг",
+      "Хөгжмийн энгийн зэмсгээр богино аяз зохион бүтээдэг",
+      "Бусдын бүтээсэн дүрийг хүлээн зөвшөөрч хамтарч тоглодог",
+      "Багаар зохион байгуулалттай урлагийн үзвэр оролцдог"
+    ]
+  }
+};
+
+// Хөгжмийн зэмсгийн жагсаалт
+const INSTRUMENTS_SEED = [
+  {num:1,name_mn:"Нидрүүлэгтэй дуут мод",name_en:"Tone block"},{num:2,name_mn:"Инцдүүр",name_en:"Castanets"},
+  {num:3,name_mn:"Хос дуут мод, Савх мод",name_en:"Double tone block, Claves"},{num:4,name_mn:"Кажон",name_en:"Cajon"},
+  {num:5,name_mn:"Бөмбөр",name_en:"Drum"},{num:6,name_mn:"Бонго бөмбөр",name_en:"Bongo"},
+  {num:7,name_mn:"Шигшрэг",name_en:"Tambourine"},{num:8,name_mn:"Хэц (шигшрэгтэй)",name_en:"Tambourine with jingles"},
+  {num:9,name_mn:"Хэц (шигшрэггүй)",name_en:"Wave drum"},{num:10,name_mn:"Бариултай хонх",name_en:"Sleigh bells"},
+  {num:11,name_mn:"Туузан дээр бэхэлсэн хонх",name_en:"Wrist bell"},{num:12,name_mn:"Дэншиг хонх",name_en:"Hand bell"},
+  {num:13,name_mn:"Цан",name_en:"Cymbals"},{num:14,name_mn:"Хүрий",name_en:"Triangle"},
+  {num:15,name_mn:"Өндгөн шигшүүр",name_en:"Egg shaker"},{num:16,name_mn:"Шигшүүр (том, жижиг)",name_en:"Maracas"},
+  {num:17,name_mn:"Төмөр царгил",name_en:"Glockenspiel"},{num:18,name_mn:"Модон царгил",name_en:"Xylophone"},
+  {num:19,name_mn:"Эгшигт хонх (дарж тоглох)",name_en:"Desk touch bell"},
+  {num:20,name_mn:"Эгшигт хонх (сэгсэрч)",name_en:"Melody bell"},
+  {num:21,name_mn:"Даралтат дэвсгэр хөгжим",name_en:"Playmat Keyboard"},{num:22,name_mn:"Цуурайт хонх",name_en:"Resonator bell"},
+  {num:23,name_mn:"Хөгт хоолой",name_en:"Boomwhackers"},{num:24,name_mn:"Эрхий хурууны төгөлдөр хуур",name_en:"Kalimba"},
+  {num:25,name_mn:"Даралтад үлээвэр хөгжим",name_en:"Pianica"},{num:26,name_mn:"Тууз",name_en:"Ribbon wand"},
+  {num:27,name_mn:"Цагариг",name_en:"Hoop"},{num:28,name_mn:"Өнгөт алчуур",name_en:"Dancing scarf"},
+  {num:29,name_mn:"Уян татлага",name_en:"Cooperative band"},{num:30,name_mn:"Шүхэрт даавуу",name_en:"Parachute cloth"},
+  {num:31,name_mn:"Үсэрдэг дэвсгэр",name_en:"Jumping mat"},{num:32,name_mn:"Бага тайз",name_en:"Performance stage"}
+];
+
+// In-memory caches
+let LESSONS = {}, PLANS = {}, CHILDREN = {}, ASSESS = {}, TEACHER_PW = "Suwdaa1113";
+let CRITERIA_CHECKS = {}; // { childId: { "L-N": {checked, note} } }
+let INSTRUMENTS = [];
+let ATTENDANCE = {}; // { childId: { "YYYY-MM-DD": row } }
+let EVENTS = [];
+let MESSAGES = {}; // { childId: [rows] }
+let MUSIC_CHECKS = {}; // { childId: { "L-cat-N": {status, note} } }
+let ANNOUNCEMENTS = [];
+let METHODIST_NOTES = [];
+
+// ============ DATA LAYER (Supabase) ============
+async function loadAll() {
+  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes] = await Promise.all([
+    sb.from('lessons').select('*').order('created_at'),
+    sb.from('plans').select('*').order('created_at'),
+    sb.from('children').select('*').order('created_at'),
+    sb.from('assessments').select('*').order('date', {ascending:false}),
+    sb.from('settings').select('*').eq('key','teacher_password').maybeSingle(),
+    sb.from('criteria_checks').select('*'),
+    sb.from('instruments').select('*').order('num'),
+    sb.from('attendance').select('*').order('date', {ascending:false}),
+    sb.from('events').select('*').order('event_date', {ascending:false}),
+    sb.from('messages').select('*').order('created_at'),
+    sb.from('music_criteria_checks').select('*'),
+    sb.from('announcements').select('*').order('pinned', {ascending:false}).order('created_at', {ascending:false}),
+    sb.from('methodist_notes').select('*').order('created_at', {ascending:false})
+  ]);
+  MUSIC_CHECKS = {};
+  for (const m of (mccRes.data||[])) {
+    if (!MUSIC_CHECKS[m.child_id]) MUSIC_CHECKS[m.child_id] = {};
+    MUSIC_CHECKS[m.child_id][m.level+"|"+m.category+"|"+m.criterion_num] = m;
+  }
+  ANNOUNCEMENTS = anRes.data || [];
+  METHODIST_NOTES = (mnRes && mnRes.data) || [];
+  ATTENDANCE = {};
+  for (const a of (atRes.data||[])) {
+    if (!ATTENDANCE[a.child_id]) ATTENDANCE[a.child_id] = {};
+    ATTENDANCE[a.child_id][a.date] = a;
+  }
+  EVENTS = evRes.data || [];
+  MESSAGES = {};
+  for (const m of (msRes.data||[])) {
+    if (!MESSAGES[m.child_id]) MESSAGES[m.child_id] = [];
+    MESSAGES[m.child_id].push(m);
+  }
+  CRITERIA_CHECKS = {};
+  for (const c of (ccRes.data||[])) {
+    if (!CRITERIA_CHECKS[c.child_id]) CRITERIA_CHECKS[c.child_id] = {};
+    CRITERIA_CHECKS[c.child_id][c.level+"-"+c.criterion_num] = c;
+  }
+  INSTRUMENTS = inRes.data || [];
+  if (INSTRUMENTS.length === 0) {
+    await sb.from('instruments').insert(INSTRUMENTS_SEED);
+    const re = await sb.from('instruments').select('*').order('num');
+    INSTRUMENTS = re.data || [];
+  }
+  LESSONS = {};
+  for (const g of GROUPS) { LESSONS[g.id] = {}; for (const e of ELEMENTS) LESSONS[g.id][e.id] = []; }
+  for (const l of (lRes.data||[])) {
+    if (!LESSONS[l.group_id]) LESSONS[l.group_id] = {};
+    if (!LESSONS[l.group_id][l.element_id]) LESSONS[l.group_id][l.element_id] = [];
+    LESSONS[l.group_id][l.element_id].push(l);
+  }
+  PLANS = {};
+  for (const g of GROUPS) PLANS[g.id] = { yearly: [], monthly: [], lesson: [] };
+  for (const p of (pRes.data||[])) {
+    if (!PLANS[p.group_id]) PLANS[p.group_id] = { yearly:[], monthly:[], lesson:[] };
+    if (!PLANS[p.group_id][p.tab]) PLANS[p.group_id][p.tab] = [];
+    PLANS[p.group_id][p.tab].push(p);
+  }
+  CHILDREN = {};
+  for (const g of GROUPS) CHILDREN[g.id] = [];
+  for (const c of (cRes.data||[])) {
+    if (!CHILDREN[c.group_id]) CHILDREN[c.group_id] = [];
+    CHILDREN[c.group_id].push(c);
+  }
+  ASSESS = {};
+  for (const a of (aRes.data||[])) {
+    if (!ASSESS[a.child_id]) ASSESS[a.child_id] = { start:[], progress:{observ:[],talk:[],note:[]}, result:[] };
+    if (a.section === 'progress') ASSESS[a.child_id].progress[a.subsection||'observ'].push(a);
+    else if (ASSESS[a.child_id][a.section]) ASSESS[a.child_id][a.section].push(a);
+  }
+  if (sRes.data && sRes.data.value) TEACHER_PW = sRes.data.value;
+}
+async function uploadFile(file) {
+  const ext = file.name.split('.').pop();
+  const name = `${Date.now()}-${Math.random().toString(36).substring(2,8)}.${ext}`;
+  const { error } = await sb.storage.from('media').upload(name, file);
+  if (error) { alert("Файл хуулах алдаа: " + error.message); return null; }
+  const { data } = sb.storage.from('media').getPublicUrl(name);
+  return data.publicUrl;
+}
+
+// ============ STATE ============
+const state = { view: "login", group: null, element: null, planTab: "yearly", planGroup: null,
+  assessGroup: null, assessChild: null, assessTab: "start", progressTab: "observ",
+  role: null, parentChildId: null };
+
+// ============ INIT ============
+(async () => {
+  try { await loadAll(); } catch(e) { alert("Мэдээллийн сан холбогдоход алдаа: "+e.message); }
+  const auth = sessionStorage.getItem("auth");
+  if (auth === "teacher") { state.role = "teacher"; state.view = "home"; }
+  else if (auth && auth.startsWith("parent:")) {
+    state.role = "parent"; state.parentChildId = auth.substring(7); state.view = "parentView";
+  }
+  render();
+})();
+
+// ============ RENDER ============
+const app = document.getElementById("app");
+function render() {
+  if (state.view === "login") return renderLogin();
+  const header = `
+    <header>
+      <h1>🎵 ХӨГЖИМ ӨЛЗИЙ</h1>
+      <nav>
+        ${state.role === "teacher" ? `
+          <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()" title="Тохиргоо">⚙️</button>
+          <button class="btn btn-secondary btn-sm" onclick="exportData()" title="Нөөцлөх">📥</button>
+          <button class="btn btn-secondary btn-sm" onclick="document.getElementById('importFile').click()" title="Сэргээх">📤</button>
+          <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+        ` : ""}
+        <button class="btn btn-secondary btn-sm" onclick="logout()">Гарах</button>
+      </nav>
+    </header>`;
+  let body = "";
+  if (state.view === "parentView") body = renderParentView();
+  else if (state.view === "home") body = renderHome();
+  else if (state.view === "groups") body = renderGroups();
+  else if (state.view === "elements") body = renderElements();
+  else if (state.view === "lessons") body = renderLessons();
+  else if (state.view === "planGroups") body = renderPlanGroups();
+  else if (state.view === "plan") body = renderPlan();
+  else if (state.view === "yearlyPlans") body = renderYearlyPlans();
+  else if (state.view === "instruments") body = renderInstruments();
+  else if (state.view === "attendanceGroups") body = renderAttendanceGroups();
+  else if (state.view === "attendance") body = renderAttendance();
+  else if (state.view === "events") body = renderEvents();
+  else if (state.view === "messagesGroups") body = renderMessagesGroups();
+  else if (state.view === "messagesChildren") body = renderMessagesChildren();
+  else if (state.view === "chat") body = renderChat();
+  else if (state.view === "announcements") body = renderAnnouncements();
+  else if (state.view === "methodist") body = renderMethodist();
+  else if (state.view === "summary") body = renderSummary();
+  else if (state.view === "assessGroups") body = renderAssessGroups();
+  else if (state.view === "assessChildren") body = renderAssessChildren();
+  else if (state.view === "assessChild") body = renderAssessChild();
+  app.innerHTML = header + `<div class="container">${body}</div>`;
+}
+
+let loginTab = "t";
+function renderLogin() {
+  app.innerHTML = `
+    <div class="login-wrap">
+      <div class="login-card">
+        <h1>🎵 ХӨГЖИМ ӨЛЗИЙ</h1>
+        <p>Нэвтрэх систем</p>
+        <div style="display:flex;gap:6px;margin-bottom:16px;justify-content:center">
+          <button class="btn btn-sm" id="tab-t" onclick="setLoginTab('t')">👩‍🏫 Багш</button>
+          <button class="btn btn-secondary btn-sm" id="tab-p" onclick="setLoginTab('p')">👨‍👩‍👧 Эцэг эх</button>
+        </div>
+        <form onsubmit="return doLogin(event)">
+          <input type="password" id="pw" class="input" placeholder="Багшийн нууц код" autofocus>
+          <div class="error" id="err"></div>
+          <button class="btn" type="submit" id="loginBtn">Нэвтрэх</button>
+        </form>
+      </div>
+    </div>`;
+}
+function setLoginTab(t) {
+  loginTab = t;
+  document.getElementById("tab-t").className = "btn btn-sm" + (t==="t"?"":" btn-secondary");
+  document.getElementById("tab-p").className = "btn btn-sm" + (t==="p"?"":" btn-secondary");
+  document.getElementById("pw").placeholder = t==="t" ? "Багшийн нууц код" : "Хүүхдийн код (багшаас авна)";
+  document.getElementById("pw").type = t==="t" ? "password" : "text";
+  document.getElementById("err").textContent = "";
+}
+async function doLogin(e) {
+  e.preventDefault();
+  const btn = document.getElementById("loginBtn"); btn.disabled = true;
+  const pw = document.getElementById("pw").value.trim();
+  if (loginTab === "t") {
+    if (pw === TEACHER_PW) {
+      sessionStorage.setItem("auth", "teacher");
+      state.role = "teacher"; state.view = "home"; render();
+    } else document.getElementById("err").textContent = "Нууц код буруу байна";
+  } else {
+    const { data } = await sb.from('children').select('*').eq('parent_code', pw.toUpperCase()).maybeSingle();
+    if (data) {
+      sessionStorage.setItem("auth", "parent:" + data.id);
+      state.role = "parent"; state.parentChildId = data.id; state.view = "parentView"; render();
+    } else document.getElementById("err").textContent = "Хүүхдийн код олдсонгүй";
+  }
+  btn.disabled = false; return false;
+}
+function logout() { sessionStorage.removeItem("auth"); state.role = null; state.parentChildId = null; state.view = "login"; render(); }
+function goHome() { state.view = "home"; render(); }
+function goGroups() { state.view = "groups"; state.group = null; state.element = null; render(); }
+function goElements(gid) { state.group = gid; state.view = "elements"; render(); }
+function goLessons(elid) { state.element = elid; state.view = "lessons"; render(); }
+function goPlan(gid) { state.planGroup = gid; state.planTab = "yearly"; state.view = "plan"; render(); }
+
+// ============ HOME / GROUPS / ELEMENTS / LESSONS ============
+function renderHome() {
+  const totalChildren = Object.values(CHILDREN).reduce((s,arr)=>s+arr.length,0);
+  const totalLessons = Object.values(LESSONS).reduce((s,g)=>s+Object.values(g).reduce((ss,arr)=>ss+arr.length,0),0);
+  return `
+    <div style="text-align:center;padding:24px 20px 8px;background:linear-gradient(135deg,#111827 0%,#374151 100%);color:white;border-radius:16px;margin-bottom:24px">
+      <div style="font-size:44px">🎵</div>
+      <h2 style="font-size:22px;font-weight:700;margin:8px 0 4px">ХӨГЖИМ ӨЛЗИЙ СИСТЕМ</h2>
+      <p style="color:#d1d5db;font-size:13px;margin-bottom:14px">СӨБ хөгжмийн шинэчилсэн хөтөлбөр 2026-2027</p>
+      <div style="display:flex;gap:20px;justify-content:center;flex-wrap:wrap;font-size:13px;color:#e5e7eb;padding-bottom:8px">
+        <div><strong style="font-size:20px;color:white;display:block">${totalChildren}</strong>Хүүхэд</div>
+        <div><strong style="font-size:20px;color:white;display:block">${totalLessons}</strong>Хичээлийн сэдэв</div>
+        <div><strong style="font-size:20px;color:white;display:block">${GROUPS.length}</strong>Бүлэг</div>
+      </div>
+    </div>
+    <div class="grid">
+      <div class="card" onclick="state.view='groups';render()">
+        <span class="element-icon">🎵</span><h3>Бүлгүүд ба Дугуйлан</h3>
+        <p>Хөгжмийн хичээлийн сэдэв, материалууд</p></div>
+      <div class="card" onclick="state.view='planGroups';render()">
+        <span class="element-icon">📋</span><h3>Хөтөлбөр төлөвлөгөө</h3>
+        <p>Жилийн, сарын, ээлжит төлөвлөгөө</p></div>
+      <div class="card" onclick="state.view='yearlyPlans';render()">
+        <span class="element-icon">📅</span><h3>Жилийн төлөвлөлт (Матриц)</h3>
+        <p>4 түвшний бүрэн матриц</p></div>
+      <div class="card" onclick="state.view='assessGroups';render()">
+        <span class="element-icon">📊</span><h3>Хүүхдийн хөгжлийн үнэлгээ</h3>
+        <p>Гараа, явц, үр дүн, шалгуур</p></div>
+      <div class="card" onclick="state.view='instruments';render()">
+        <span class="element-icon">🎼</span><h3>Хөгжмийн зэмсгийн каталог</h3>
+        <p>32 хөгжмийн зэмсэг, хэрэглэгдэхүүн</p></div>
+      <div class="card" onclick="state.view='attendanceGroups';render()">
+        <span class="element-icon">📋</span><h3>Хичээлийн ирц</h3>
+        <p>Өдөр тутмын ирц бүртгэл</p></div>
+      <div class="card" onclick="state.view='events';render()">
+        <span class="element-icon">🎭</span><h3>Тайлант тоглолт, өдөрлөг</h3>
+        <p>Арга хэмжээний бэлтгэл, тэмдэглэл</p></div>
+      <div class="card" onclick="state.view='messagesGroups';render()">
+        <span class="element-icon">💬</span><h3>Эцэг эхтэй харилцах</h3>
+        <p>Хүүхэд тус бүрд зурвас илгээх</p></div>
+      <div class="card" onclick="state.view='announcements';render()">
+        <span class="element-icon">📢</span><h3>Зар мэдээ, өдөр тутмын үйл ажиллагаа</h3>
+        <p>Бүх эцэг эхэд харагдана</p></div>
+      <div class="card" onclick="state.view='methodist';render()">
+        <span class="element-icon">👔</span><h3>Арга зүйч, эрхлэгчийн хэсэг</h3>
+        <p>Хяналт, зөвлөгөө, арга зүйн заавар</p></div>
+    </div>`;
+}
+
+// ============ SETTINGS ============
+function openSettingsModal() {
+  showModal(`
+    <h3>⚙️ Тохиргоо</h3>
+    <div class="form-group">
+      <label>Багшийн одоогийн нууц код</label>
+      <input class="input" id="s-old" type="password" placeholder="Одоогийн код">
+    </div>
+    <div class="form-group">
+      <label>Шинэ нууц код</label>
+      <input class="input" id="s-new" type="password" placeholder="Шинэ код (доод тал нь 6 тэмдэгт)">
+    </div>
+    <div class="form-group">
+      <label>Шинэ нууц код давт</label>
+      <input class="input" id="s-new2" type="password" placeholder="Шинэ кодыг давт">
+    </div>
+    <div id="s-err" style="color:var(--danger);font-size:13px;min-height:18px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Хаах</button>
+      <button class="btn" onclick="changePassword()">Хадгалах</button>
+    </div>`);
+}
+async function changePassword() {
+  const oldPw = document.getElementById("s-old").value;
+  const newPw = document.getElementById("s-new").value;
+  const new2 = document.getElementById("s-new2").value;
+  const err = document.getElementById("s-err");
+  if (oldPw !== TEACHER_PW) { err.textContent = "Одоогийн код буруу"; return; }
+  if (newPw.length < 6) { err.textContent = "Шинэ код 6-с их байх ёстой"; return; }
+  if (newPw !== new2) { err.textContent = "Шинэ код таарахгүй байна"; return; }
+  const { error } = await sb.from('settings').upsert({key:'teacher_password', value:newPw});
+  if (error) { err.textContent = "Алдаа: "+error.message; return; }
+  TEACHER_PW = newPw;
+  closeModal(); alert("Нууц код амжилттай өөрчлөгдлөө");
+}
+async function regenChildCode(id) {
+  if (!confirm("Хүүхдийн эцэг эхийн кодыг шинээр үүсгэх үү? Хуучин код ажиллахаа болино.")) return;
+  const code = Math.random().toString(36).substring(2,8).toUpperCase();
+  await sb.from('children').update({parent_code: code}).eq('id', id);
+  await loadAll();
+  alert("Шинэ код: " + code);
+  render();
+}
+
+// ============ INSTRUMENTS CATALOG ============
+function renderInstruments() {
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Хөгжмийн зэмсэг</span></div>
+    <div class="toolbar">
+      <div><h2 class="section">🎼 Хөгжмийн зэмсгийн каталог</h2>
+        <p class="section-desc" style="margin:0">${INSTRUMENTS.length} зэмсэг</p></div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr))">
+      ${INSTRUMENTS.map(i => `
+        <div class="card" style="cursor:default;text-align:center">
+          <div style="font-size:36px;margin-bottom:6px">🎵</div>
+          <div style="font-size:11px;color:var(--muted)">№${i.num}</div>
+          <h3 style="font-size:14px;margin:4px 0">${escapeHTML(i.name_mn)}</h3>
+          <p style="font-size:12px;font-style:italic">${escapeHTML(i.name_en||'')}</p>
+          ${state.role==="teacher"?`
+            <button class="btn btn-secondary btn-sm" style="margin-top:8px" onclick="editInstrument('${i.id}')">Зураг нэмэх</button>
+          `:''}
+          ${i.image_url?`<img src="${escapeAttr(i.image_url)}" style="max-width:100%;margin-top:8px;border-radius:6px">`:''}
+        </div>`).join("")}
+    </div>`;
+}
+async function editInstrument(id) {
+  const inst = INSTRUMENTS.find(x=>x.id===id);
+  showModal(`
+    <h3>${escapeHTML(inst.name_mn)}</h3>
+    <div class="form-group">
+      <label>Зураг сонгох</label>
+      <input class="input" id="i-file" type="file" accept="image/*">
+    </div>
+    <div class="form-group">
+      <label>эсвэл URL</label>
+      <input class="input" id="i-url" value="${escapeAttr(inst.image_url||'')}">
+    </div>
+    <div class="form-group">
+      <label>Тайлбар</label>
+      <textarea class="input" id="i-desc">${escapeHTML(inst.description||'')}</textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Болих</button>
+      <button class="btn" id="i-save" onclick="saveInstrument('${id}')">Хадгалах</button>
+    </div>`);
+}
+async function saveInstrument(id) {
+  const btn = document.getElementById("i-save"); btn.disabled=true; btn.textContent="Хуулж байна...";
+  const file = document.getElementById("i-file").files[0];
+  let url = document.getElementById("i-url").value.trim();
+  const desc = document.getElementById("i-desc").value.trim();
+  if (file) { const u = await uploadFile(file); if (u) url = u; }
+  await sb.from('instruments').update({image_url: url||null, description: desc||null}).eq('id', id);
+  await loadAll(); closeModal(); render();
+}
+function renderGroups() {
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Бүлгүүд</span></div>
+    <h2 class="section">Бүлгээ сонгоно уу</h2>
+    <p class="section-desc">Хөгжмийн хичээл ордог бүлэг болон дугуйлан</p>
+    <div class="grid">
+      ${GROUPS.map(g => `
+        <div class="card" onclick="goElements('${g.id}')">
+          <h3>${g.name}</h3><p>${g.age}</p>
+          <span class="badge">${g.level} · 7 хоногт ${g.hours} цаг</span>
+        </div>`).join("")}
+    </div>`;
+}
+function renderElements() {
+  const g = GROUPS.find(x => x.id === state.group);
+  return `
+    <div class="breadcrumb">
+      <a onclick="goGroups()">Бүлгүүд</a><span class="sep">›</span><span>${g.name}</span>
+    </div>
+    <h2 class="section">${g.name} — Агуулга</h2>
+    <p class="section-desc">${g.age} · 7 хоногт ${g.hours} цаг</p>
+    <div class="grid">
+      ${ELEMENTS.map(el => {
+        const count = (LESSONS[state.group] && LESSONS[state.group][el.id] || []).length;
+        return `
+          <div class="card" onclick="goLessons('${el.id}')">
+            <span class="element-icon">${el.icon}</span>
+            <h3>${el.name}</h3><p>${el.desc}</p>
+            <span class="badge">${count} сэдэв</span>
+          </div>`;
+      }).join("")}
+    </div>`;
+}
+function renderLessons() {
+  const g = GROUPS.find(x => x.id === state.group);
+  const el = ELEMENTS.find(x => x.id === state.element);
+  const lessons = (LESSONS[state.group] && LESSONS[state.group][state.element]) || [];
+  return `
+    <div class="breadcrumb">
+      <a onclick="goGroups()">Бүлгүүд</a><span class="sep">›</span>
+      <a onclick="goElements('${state.group}')">${g.name}</a><span class="sep">›</span>
+      <span>${el.name}</span>
+    </div>
+    <div class="toolbar">
+      <div><h2 class="section">${el.icon} ${el.name}</h2>
+        <p class="section-desc" style="margin:0">${lessons.length} сэдэв</p></div>
+      <button class="btn" onclick="openLessonModal()">+ Сэдэв нэмэх</button>
+    </div>
+    ${lessons.length === 0 ? `<div class="empty">Сэдэв байхгүй байна.</div>` :
+    `<div class="lesson-list">
+      ${lessons.map((l, i) => `
+        <div class="lesson-item">
+          <div class="info">
+            <h4>${i+1}. ${escapeHTML(l.title)}</h4>
+            ${l.note ? `<div class="meta">${escapeHTML(l.note)}</div>` : ""}
+            ${l.materials && l.materials.length ? `
+              <div class="materials">
+                ${l.materials.map((m, mi) => renderMaterial(l.id, m, mi)).join("")}
+              </div>` : ""}
+            <div style="margin-top:10px;">
+              <button class="btn btn-secondary btn-sm" onclick="openMaterialModal('${l.id}')">+ Материал</button>
+            </div>
+          </div>
+          <div class="actions">
+            <button class="btn btn-secondary btn-sm" onclick="openLessonModal('${l.id}')">Засах</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteLesson('${l.id}')">Устгах</button>
+          </div>
+        </div>`).join("")}
+    </div>`}`;
+}
+function renderMaterial(lessonId, m, idx) {
+  const typeLabel = { link:"Холбоос", video:"Бичлэг", image:"Зураг", exercise:"Дасгал", digital:"Цахим", note:"Тэмдэглэл" }[m.type] || m.type;
+  let content = "";
+  if (m.type === "image") content = `<img src="${escapeAttr(m.content)}" style="max-width:120px;max-height:120px;border-radius:6px;cursor:pointer" onclick="window.open('${escapeAttr(m.content)}','_blank')">`;
+  else if (m.type === "video") content = m.content.includes("youtube.com") || m.content.includes("youtu.be") ?
+    `<a href="${escapeAttr(m.content)}" target="_blank">🎬 ${escapeHTML(m.label||m.content)}</a>` :
+    `<video src="${escapeAttr(m.content)}" controls style="max-width:280px;max-height:160px;border-radius:6px"></video>`;
+  else if (m.type === "link" || m.type === "digital") content = `<a href="${escapeAttr(m.content)}" target="_blank">${escapeHTML(m.label||m.content)}</a>`;
+  else content = `<div>${m.label ? `<strong>${escapeHTML(m.label)}:</strong> ` : ""}${escapeHTML(m.content)}</div>`;
+  return `
+    <div class="material">
+      <div class="mcontent">
+        <div class="mtype">${typeLabel}</div>${content}
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="deleteMaterial('${lessonId}',${idx})">✕</button>
+    </div>`;
+}
+
+// Lesson CRUD
+function openLessonModal(lessonId) {
+  const editing = lessonId ? (LESSONS[state.group][state.element].find(x => x.id === lessonId)) : null;
+  showModal(`
+    <h3>${editing ? "Сэдэв засах" : "Шинэ сэдэв"}</h3>
+    <form onsubmit="return saveLesson(event, '${lessonId || ""}')">
+      <div class="form-group"><label>Сэдвийн нэр</label>
+        <input class="input" id="l-title" required value="${editing?escapeAttr(editing.title):''}"></div>
+      <div class="form-group"><label>Тайлбар</label>
+        <textarea class="input" id="l-note">${editing?escapeHTML(editing.note||''):''}</textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn">Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveLesson(e, lessonId) {
+  e.preventDefault();
+  const title = document.getElementById("l-title").value.trim();
+  const note = document.getElementById("l-note").value.trim();
+  if (!title) return false;
+  if (lessonId) {
+    await sb.from('lessons').update({title, note}).eq('id', lessonId);
+  } else {
+    await sb.from('lessons').insert({group_id: state.group, element_id: state.element, title, note, materials: []});
+  }
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteLesson(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('lessons').delete().eq('id', id);
+  await loadAll(); render();
+}
+function openMaterialModal(lessonId) {
+  showModal(`
+    <h3>Материал нэмэх</h3>
+    <form onsubmit="return saveMaterial(event, '${lessonId}')">
+      <div class="form-group"><label>Төрөл</label>
+        <select class="input" id="m-type">
+          <option value="video">Бичлэг</option>
+          <option value="image">Зураг</option>
+          <option value="link">Холбоос</option>
+          <option value="digital">Цахим хэрэглэгдэхүүн</option>
+          <option value="exercise">Дасгал ажил</option>
+          <option value="note">Тэмдэглэл</option>
+        </select></div>
+      <div class="form-group"><label>Гарчиг</label><input class="input" id="m-label"></div>
+      <div class="form-group"><label>Файл оруулах (зураг/бичлэг)</label>
+        <input class="input" id="m-file" type="file" accept="image/*,video/*"></div>
+      <div class="form-group"><label>эсвэл URL / текст</label>
+        <textarea class="input" id="m-content"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="m-save">Нэмэх</button>
+      </div>
+    </form>`);
+}
+async function saveMaterial(e, lessonId) {
+  e.preventDefault();
+  const type = document.getElementById("m-type").value;
+  const label = document.getElementById("m-label").value.trim();
+  let content = document.getElementById("m-content").value.trim();
+  const file = document.getElementById("m-file").files[0];
+  const btn = document.getElementById("m-save"); btn.disabled = true; btn.textContent = "Хуулж байна...";
+  if (file) { const url = await uploadFile(file); if (url) content = url; }
+  if (!content) { btn.disabled = false; btn.textContent = "Нэмэх"; return false; }
+  const lesson = LESSONS[state.group][state.element].find(x => x.id === lessonId);
+  const mats = [...(lesson.materials||[]), { type, label, content }];
+  await sb.from('lessons').update({materials: mats}).eq('id', lessonId);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteMaterial(lessonId, idx) {
+  const lesson = LESSONS[state.group][state.element].find(x => x.id === lessonId);
+  const mats = (lesson.materials||[]).filter((_,i) => i !== idx);
+  await sb.from('lessons').update({materials: mats}).eq('id', lessonId);
+  await loadAll(); render();
+}
+
+// ============ PLANS ============
+function renderPlanGroups() {
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Хөтөлбөр төлөвлөгөө</span></div>
+    <h2 class="section">📋 Хөтөлбөр төлөвлөгөө</h2>
+    <p class="section-desc">Бүлгээ сонго</p>
+    <div class="grid">
+      ${GROUPS.map(g => `
+        <div class="card" onclick="goPlan('${g.id}')">
+          <h3>${g.name}</h3><p>${g.age}</p>
+          <span class="badge">${g.level}</span>
+        </div>`).join("")}
+    </div>`;
+}
+function renderPlan() {
+  const g = GROUPS.find(x => x.id === state.planGroup);
+  const p = PLANS[state.planGroup] || { yearly:[], monthly:[], lesson:[] };
+  const tab = state.planTab;
+  const tabs = [
+    { id:"yearly", name:"Жилийн" },
+    { id:"monthly", name:"Сарын" },
+    { id:"lesson", name:"Ээлжит хичээл" }
+  ];
+  const items = p[tab] || [];
+  const tabsHTML = tabs.map(t => `
+    <button class="btn ${tab===t.id?'':'btn-secondary'} btn-sm" onclick="state.planTab='${t.id}';render()">${t.name}</button>`).join("");
+  const listHTML = items.length === 0 ? `<div class="empty">Төлөвлөгөө байхгүй.</div>` :
+    `<div class="lesson-list">${items.map((it,i) => `
+      <div class="lesson-item">
+        <div class="info">
+          <h4>${i+1}. ${escapeHTML(it.title)}</h4>
+          ${it.period ? `<div class="meta"><strong>Хугацаа:</strong> ${escapeHTML(it.period)}</div>` : ""}
+          ${it.element ? `<div class="meta"><strong>Элемент:</strong> ${escapeHTML(it.element)}</div>` : ""}
+          ${it.goal ? `<div class="meta" style="margin-top:6px"><strong>Зорилго:</strong> ${escapeHTML(it.goal)}</div>` : ""}
+          ${it.content ? `<div class="meta" style="margin-top:6px;white-space:pre-wrap">${escapeHTML(it.content)}</div>` : ""}
+          ${it.result ? `<div class="meta" style="margin-top:6px"><strong>Хүрэх үр дүн:</strong> ${escapeHTML(it.result)}</div>` : ""}
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openPlanModal('${it.id}')">Засах</button>
+          <button class="btn btn-danger btn-sm" onclick="deletePlan('${it.id}')">Устгах</button>
+        </div>
+      </div>`).join("")}</div>`;
+  return `
+    <div class="breadcrumb">
+      <a onclick="goHome()">Нүүр</a><span class="sep">›</span>
+      <a onclick="state.view='planGroups';render()">Төлөвлөгөө</a><span class="sep">›</span>
+      <span>${g.name}</span>
+    </div>
+    <div class="toolbar">
+      <div><h2 class="section">${g.name} — Төлөвлөгөө</h2></div>
+      <button class="btn" onclick="openPlanModal()">+ Нэмэх</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap">${tabsHTML}</div>
+    ${listHTML}`;
+}
+function openPlanModal(id) {
+  const p = PLANS[state.planGroup][state.planTab];
+  const editing = id ? p.find(x => x.id === id) : null;
+  const tab = state.planTab;
+  const periodLabel = tab==="yearly"?"Улирал":tab==="monthly"?"Сар":"Огноо";
+  const periodField = tab==="monthly" ?
+    `<select class="input" id="p-period">${MONTHS.map(m=>`<option ${editing&&editing.period===m?'selected':''}>${m}</option>`).join("")}</select>` :
+    `<input class="input" id="p-period" value="${editing?escapeAttr(editing.period||''):''}">`;
+  showModal(`
+    <h3>${editing?"Засах":"Шинэ бичлэг"}</h3>
+    <form onsubmit="return savePlan(event, '${id||''}')">
+      <div class="form-group"><label>Гарчиг</label>
+        <input class="input" id="p-title" required value="${editing?escapeAttr(editing.title):''}"></div>
+      <div class="form-group"><label>${periodLabel}</label>${periodField}</div>
+      <div class="form-group"><label>Элемент</label>
+        <select class="input" id="p-element">
+          <option value="">—</option>
+          ${ELEMENTS.map(e=>`<option value="${e.name}" ${editing&&editing.element===e.name?'selected':''}>${e.name}</option>`).join("")}
+        </select></div>
+      <div class="form-group"><label>Зорилго</label>
+        <textarea class="input" id="p-goal">${editing?escapeHTML(editing.goal||''):''}</textarea></div>
+      <div class="form-group"><label>Агуулга</label>
+        <textarea class="input" id="p-content" style="min-height:80px">${editing?escapeHTML(editing.content||''):''}</textarea></div>
+      <div class="form-group"><label>Хүрэх үр дүн</label>
+        <textarea class="input" id="p-result">${editing?escapeHTML(editing.result||''):''}</textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn">Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function savePlan(e, id) {
+  e.preventDefault();
+  const item = {
+    group_id: state.planGroup, tab: state.planTab,
+    title: document.getElementById("p-title").value.trim(),
+    period: document.getElementById("p-period").value.trim(),
+    element: document.getElementById("p-element").value,
+    goal: document.getElementById("p-goal").value.trim(),
+    content: document.getElementById("p-content").value.trim(),
+    result: document.getElementById("p-result").value.trim()
+  };
+  if (id) await sb.from('plans').update(item).eq('id', id);
+  else await sb.from('plans').insert(item);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deletePlan(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('plans').delete().eq('id', id);
+  await loadAll(); render();
+}
+
+// ============ YEARLY PLANS ============
+function renderYearlyPlans() {
+  const items = [
+    { lvl:1, name:"Бага бүлэг", code:"I·ХӨГ1", hours:2 },
+    { lvl:2, name:"Дунд бүлэг", code:"II·ХӨГ2", hours:2 },
+    { lvl:3, name:"Ахлах бүлэг", code:"III·ХӨГ3", hours:2 },
+    { lvl:4, name:"Бэлтгэл бүлэг", code:"IV·ХӨГ4", hours:3 }
+  ];
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Жилийн төлөвлөлт</span></div>
+    <h2 class="section">📅 2026-2027 жилийн төлөвлөлт</h2>
+    <p class="section-desc">Үзэх, хэвлэх, татаж авах</p>
+    <div class="grid">
+      ${items.map(it=>`
+        <div class="card" style="cursor:default">
+          <h3>${it.name}</h3><p>${it.code} · 7 хон. ${it.hours} цаг</p>
+          <div style="display:flex;gap:6px;margin-top:14px;flex-wrap:wrap">
+            <a href="plan.html#${it.lvl}" target="_blank" class="btn btn-sm" style="text-decoration:none">Үзэх</a>
+          </div>
+        </div>`).join("")}
+    </div>`;
+}
+
+// ============ ASSESSMENT ============
+function renderAssessGroups() {
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Үнэлгээ</span></div>
+    <h2 class="section">📊 Хүүхдийн хөгжлийн үнэлгээ</h2>
+    <div class="grid">
+      ${GROUPS.map(g => `
+        <div class="card" onclick="state.assessGroup='${g.id}';state.view='assessChildren';render()">
+          <h3>${g.name}</h3><p>${g.age}</p>
+          <span class="badge">${(CHILDREN[g.id]||[]).length} хүүхэд</span>
+        </div>`).join("")}
+    </div>`;
+}
+function renderAssessChildren() {
+  const g = GROUPS.find(x => x.id === state.assessGroup);
+  const list = CHILDREN[state.assessGroup] || [];
+  return `
+    <div class="breadcrumb">
+      <a onclick="goHome()">Нүүр</a><span class="sep">›</span>
+      <a onclick="state.view='assessGroups';render()">Үнэлгээ</a><span class="sep">›</span>
+      <span>${g.name}</span>
+    </div>
+    <div class="toolbar">
+      <div><h2 class="section">${g.name}</h2><p class="section-desc" style="margin:0">${list.length} хүүхэд</p></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn btn-secondary" onclick="state.view='summary';render()" title="Нэгтгэл харах">📊 Нэгтгэл харах</button>
+        <button class="btn btn-secondary" onclick="showExportMenu('${state.assessGroup}')" title="Excel татах">📥 Excel татах</button>
+        <button class="btn btn-secondary" onclick="openBulkImport()" title="Олон хүүхэд нэг дор">📋 Бөөнөөр нэмэх</button>
+        <button class="btn" onclick="openChildModal()">+ Хүүхэд</button>
+      </div>
+    </div>
+    ${list.length === 0 ? `<div class="empty">Хүүхэд бүртгэлгүй.</div>` :
+    `<div class="lesson-list">${list.map(c => `
+      <div class="lesson-item">
+        <div class="info">
+          <h4>${escapeHTML(c.name)}</h4>
+          <div class="meta">Төрсөн он: ${escapeHTML(c.birth_year||'—')}</div>
+          <div class="meta" style="margin-top:6px">
+            <strong>Эцэг эхийн код:</strong>
+            <code style="background:var(--bg);padding:3px 8px;border-radius:4px;letter-spacing:1px">${c.parent_code}</code>
+            <button class="btn btn-secondary btn-sm" style="margin-left:6px" onclick="navigator.clipboard.writeText('${c.parent_code}');this.textContent='✓'">Хуулах</button>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn btn-sm" onclick="state.assessChild='${c.id}';state.assessTab='start';state.view='assessChild';render()">Үнэлгээ →</button>
+          <button class="btn btn-secondary btn-sm" onclick="openChildModal('${c.id}')">Засах</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteChild('${c.id}')">Устгах</button>
+        </div>
+      </div>`).join("")}</div>`}`;
+}
+function getChild(id) {
+  for (const gid in CHILDREN) {
+    const c = (CHILDREN[gid]||[]).find(x => x.id === id);
+    if (c) return c;
+  }
+  return null;
+}
+function getA(childId) {
+  if (!ASSESS[childId]) ASSESS[childId] = { start:[], progress:{observ:[],talk:[],note:[]}, result:[] };
+  return ASSESS[childId];
+}
+function renderAssessChild(readonly) {
+  const child = getChild(state.assessChild);
+  if (!child) return `<div class="empty">Хүүхэд олдсонгүй</div>`;
+  const a = getA(child.id);
+  const tab = state.assessTab;
+  const tabs = [
+    { id:"start", name:"🌱 Гарааны" },
+    { id:"progress", name:"📈 Явцын" },
+    { id:"result", name:"🏆 Үр дүн" },
+    { id:"criteria", name:"✅ Шалгуур" },
+    { id:"music", name:"🎵 Хөгжим шалгуур" },
+    { id:"graph", name:"📊 График" },
+    { id:"chat", name:"💬 Зурвас" }
+  ];
+  let content = "";
+  if (tab === "start") content = renderEntryList(a.start, "start", null, readonly);
+  else if (tab === "result") content = renderEntryList(a.result, "result", null, readonly);
+  else if (tab === "criteria") content = renderCriteria(child, readonly);
+  else if (tab === "music") content = renderMusicCriteria(child, readonly);
+  else if (tab === "graph") content = renderChildGraph(child);
+  else if (tab === "chat") content = renderChat(readonly);
+  else if (tab === "progress") {
+    const sub = state.progressTab;
+    const subTabs = [
+      { id:"observ", name:"👁 Ажиглалт" },
+      { id:"talk", name:"💬 Ярилцлага" },
+      { id:"note", name:"📝 Тэмдэглэл" }
+    ];
+    content = `
+      <div style="display:flex;gap:6px;margin:14px 0;flex-wrap:wrap">
+        ${subTabs.map(t => `<button class="btn btn-sm ${sub===t.id?'':'btn-secondary'}" onclick="state.progressTab='${t.id}';render()">${t.name}</button>`).join("")}
+      </div>
+      ${renderEntryList(a.progress[sub], "progress", sub, readonly)}`;
+  }
+  const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === child.id));
+  const backBc = readonly ? "" : `
+    <div class="breadcrumb">
+      <a onclick="goHome()">Нүүр</a><span class="sep">›</span>
+      <a onclick="state.view='assessGroups';render()">Үнэлгээ</a><span class="sep">›</span>
+      <a onclick="state.view='assessChildren';render()">${g?g.name:''}</a><span class="sep">›</span>
+      <span>${escapeHTML(child.name)}</span>
+    </div>`;
+  return `
+    ${backBc}
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+      <div>
+        <h2 class="section">${escapeHTML(child.name)} ${readonly?'<span style="font-size:13px;color:var(--muted);font-weight:normal">(эцэг эхийн үзэлт)</span>':''}</h2>
+        <p class="section-desc" style="margin:0">${g?g.name+' · '+g.age:''}</p>
+      </div>
+      <button class="btn btn-secondary btn-sm no-print" onclick="printChildReport('${child.id}')">🖨 Тайлан хэвлэх / PDF</button>
+    </div>
+    <div style="display:flex;gap:6px;margin:20px 0;flex-wrap:wrap;border-bottom:1px solid var(--border);padding-bottom:14px">
+      ${tabs.map(t => `<button class="btn ${tab===t.id?'':'btn-secondary'} btn-sm" onclick="state.assessTab='${t.id}';render()">${t.name}</button>`).join("")}
+    </div>
+    ${content}`;
+}
+function renderEntryList(entries, section, sub, readonly) {
+  const addBtn = readonly ? "" :
+    `<div style="margin-bottom:14px"><button class="btn" onclick="openEntryModal('${section}','${sub||''}')">+ Бичлэг нэмэх</button></div>`;
+  const listHTML = (entries && entries.length) ? `
+    <div class="lesson-list">${entries.map(e => `
+      <div class="lesson-item">
+        <div class="info">
+          <div class="meta"><strong>${escapeHTML(e.date||'')}</strong>${e.title?' — '+escapeHTML(e.title):''}</div>
+          ${e.text ? `<div style="margin-top:8px;white-space:pre-wrap">${escapeHTML(e.text)}</div>` : ""}
+          ${e.media && e.media.length ? `
+            <div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">
+              ${e.media.map(m => renderMediaItem(m)).join("")}
+            </div>` : ""}
+        </div>
+        ${readonly ? "" : `<div class="actions">
+          <button class="btn btn-danger btn-sm" onclick="deleteEntry('${e.id}')">Устгах</button>
+        </div>`}
+      </div>`).join("")}</div>` : `<div class="empty">Бичлэг байхгүй байна.</div>`;
+  return `${addBtn}${listHTML}`;
+}
+function renderMediaItem(m) {
+  if (m.type === "image") return `<img src="${escapeAttr(m.src)}" style="max-width:200px;max-height:200px;border-radius:6px;border:1px solid var(--border);object-fit:cover;cursor:pointer" onclick="window.open('${escapeAttr(m.src)}','_blank')">`;
+  if (m.type === "video") return `<video src="${escapeAttr(m.src)}" controls style="max-width:280px;max-height:200px;border-radius:6px;border:1px solid var(--border)"></video>`;
+  return `<a href="${escapeAttr(m.src)}" target="_blank" style="padding:8px 12px;background:var(--bg);border-radius:6px;text-decoration:none;color:var(--accent)">🔗 ${escapeHTML(m.label||m.src)}</a>`;
+}
+function renderMusicCriteria(child, readonly) {
+  const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === child.id));
+  const level = groupToLevel[g?g.id:'baga'] || 1;
+  const checks = MUSIC_CHECKS[child.id] || {};
+  const cats = MUSIC_CRITERIA[level];
+  let total = 0, done = 0, partial = 0;
+  Object.entries(cats).forEach(([cat, arr]) => {
+    arr.forEach((_, i) => {
+      total++;
+      const st = checks[level+"|"+cat+"|"+(i+1)]?.status;
+      if (st === 'yes') done++;
+      else if (st === 'partial') partial++;
+    });
+  });
+  const pct = total ? Math.round((done + partial*0.5) / total * 100) : 0;
+  const btns = (childId, cat, num, cur) => {
+    if (readonly) {
+      const label = cur==='yes'?'✓ Тийм':cur==='partial'?'~ Хэсэгчлэн':cur==='no'?'✗ Үгүй':'—';
+      const color = cur==='yes'?'#10b981':cur==='partial'?'#f59e0b':cur==='no'?'#dc2626':'var(--muted)';
+      return `<span style="color:${color};font-weight:600;font-size:13px">${label}</span>`;
+    }
+    return `
+      <div style="display:flex;gap:4px;flex-wrap:wrap">
+        <button class="btn btn-sm" onclick="setMusicStatus('${childId}',${level},'${cat.replace(/'/g,"\\'")}',${num},'yes')"
+          style="${cur==='yes'?'background:#10b981;color:white':'background:transparent;color:#10b981;border:1px solid var(--border)'}">✓</button>
+        <button class="btn btn-sm" onclick="setMusicStatus('${childId}',${level},'${cat.replace(/'/g,"\\'")}',${num},'partial')"
+          style="${cur==='partial'?'background:#f59e0b;color:white':'background:transparent;color:#f59e0b;border:1px solid var(--border)'}">~</button>
+        <button class="btn btn-sm" onclick="setMusicStatus('${childId}',${level},'${cat.replace(/'/g,"\\'")}',${num},'no')"
+          style="${cur==='no'?'background:#dc2626;color:white':'background:transparent;color:#dc2626;border:1px solid var(--border)'}">✗</button>
+      </div>`;
+  };
+  const html = Object.entries(cats).map(([cat, arr]) => `
+    <h3 style="font-size:14px;margin:20px 0 8px;padding:8px 14px;background:#eff6ff;border-left:4px solid #3b82f6;border-radius:6px">🎵 ${escapeHTML(cat)}</h3>
+    ${arr.map((text, i) => {
+      const key = level+"|"+cat+"|"+(i+1);
+      const c = checks[key];
+      const cur = c?.status;
+      const bg = cur==='yes'?'#f0fdf4':cur==='partial'?'#fffbeb':cur==='no'?'#fef2f2':'';
+      return `
+        <div style="padding:12px;border-bottom:1px solid var(--border);background:${bg}">
+          <div style="display:flex;gap:12px;align-items:flex-start;flex-wrap:wrap">
+            <div style="min-width:22px;font-size:12px;color:var(--muted);padding-top:6px">${i+1}.</div>
+            <div style="flex:1;min-width:200px;font-size:14px">${escapeHTML(text)}</div>
+            <div>${btns(child.id, cat, i+1, cur)}</div>
+          </div>
+          ${!readonly?`
+            <div style="margin-top:6px;padding-left:34px">
+              <input class="input" style="font-size:12px;padding:5px 10px" placeholder="Тайлбар (заавал биш)"
+                value="${escapeAttr(c?.note||'')}"
+                onblur="setMusicNote('${child.id}',${level},'${cat.replace(/'/g,"\\'")}',${i+1},this.value)">
+            </div>`:(c?.note?`<div style="margin-top:6px;padding-left:34px;font-size:12px;color:var(--muted);font-style:italic">${escapeHTML(c.note)}</div>`:'')}
+        </div>`;
+    }).join("")}`).join("");
+  return `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div><strong>Хөгжмийн шалгуур (${level}-р түвшин)</strong> · ${done}/${total} тийм, ${partial} хэсэгчлэн</div>
+        <strong style="color:#3b82f6;font-size:18px">${pct}%</strong>
+      </div>
+      <div style="height:10px;background:var(--bg);border-radius:5px;overflow:hidden;display:flex">
+        <div style="width:${total?done/total*100:0}%;background:#10b981"></div>
+        <div style="width:${total?partial/total*100:0}%;background:#f59e0b"></div>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-top:6px">Хөгжмийн багшийн явцын ажиглалт судалгаа</div>
+    </div>
+    ${html}`;
+}
+async function setMusicStatus(childId, level, category, num, status) {
+  const key = level+"|"+category+"|"+num;
+  const cur = MUSIC_CHECKS[childId]?.[key];
+  if (cur) {
+    const newStatus = cur.status === status ? null : status;
+    await sb.from('music_criteria_checks').update({status: newStatus, updated_at: new Date().toISOString()}).eq('id', cur.id);
+  } else {
+    await sb.from('music_criteria_checks').insert({child_id: childId, level, category, criterion_num: num, status});
+  }
+  await loadAll(); render();
+}
+async function setMusicNote(childId, level, category, num, note) {
+  const key = level+"|"+category+"|"+num;
+  const cur = MUSIC_CHECKS[childId]?.[key];
+  if (cur) {
+    if ((cur.note||'') === note) return;
+    await sb.from('music_criteria_checks').update({note}).eq('id', cur.id);
+  } else if (note.trim()) {
+    await sb.from('music_criteria_checks').insert({child_id: childId, level, category, criterion_num: num, note});
+  } else return;
+  await loadAll();
+}
+function renderChildGraph(child) {
+  const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === child.id));
+  const level = groupToLevel[g?g.id:'baga'] || 1;
+  const checks = CRITERIA_CHECKS[child.id] || {};
+  const cats = CRITERIA[level];
+  const catStats = [];
+  let idx = 0;
+  Object.entries(cats).forEach(([cat, arr]) => {
+    let done = 0;
+    arr.forEach(() => { idx++; if (checks[level+"-"+idx]?.checked) done++; });
+    catStats.push({ cat, done, total: arr.length, pct: Math.round(done/arr.length*100) });
+  });
+  const a = getA(child.id);
+  const startN = a.start.length, resultN = a.result.length;
+  const progN = a.progress.observ.length + a.progress.talk.length + a.progress.note.length;
+  const att = ATTENDANCE[child.id] || {};
+  const attStats = { present:0, absent:0, late:0, sick:0 };
+  Object.values(att).forEach(r => { if (attStats[r.status] !== undefined) attStats[r.status]++; });
+  const attTotal = attStats.present + attStats.absent + attStats.late + attStats.sick;
+  const catColors = ["#3b82f6","#10b981","#f59e0b","#8b5cf6"];
+  return `
+    <h3 style="font-size:15px;margin:20px 0 12px">Шалгуурын явц (${level}-р түвшин)</h3>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px">
+      ${catStats.map((s,i) => `
+        <div style="margin-bottom:14px">
+          <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px">
+            <span><strong>${s.cat}</strong></span>
+            <span>${s.done}/${s.total} · ${s.pct}%</span>
+          </div>
+          <div style="height:14px;background:var(--bg);border-radius:7px;overflow:hidden">
+            <div style="width:${s.pct}%;height:100%;background:${catColors[i%catColors.length]};transition:width 0.3s"></div>
+          </div>
+        </div>`).join("")}
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">🎵 Хөгжмийн шалгуурын явц</h3>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:20px">
+      ${(() => {
+        const mcats = MUSIC_CRITERIA[level];
+        const mchecks = MUSIC_CHECKS[child.id] || {};
+        return Object.entries(mcats).map(([cat, arr], i) => {
+          let y=0, p=0;
+          arr.forEach((_,j) => { const s = mchecks[level+"|"+cat+"|"+(j+1)]?.status; if (s==='yes')y++; else if (s==='partial')p++; });
+          const pct = Math.round((y + p*0.5) / arr.length * 100);
+          return `
+            <div style="margin-bottom:14px">
+              <div style="display:flex;justify-content:space-between;margin-bottom:4px;font-size:13px">
+                <span><strong>${cat}</strong></span>
+                <span>${y}/${arr.length} тийм · ${p} хэсэгчлэн · ${pct}%</span>
+              </div>
+              <div style="height:14px;background:var(--bg);border-radius:7px;overflow:hidden;display:flex">
+                <div style="width:${y/arr.length*100}%;background:#10b981"></div>
+                <div style="width:${p/arr.length*100}%;background:#f59e0b"></div>
+              </div>
+            </div>`;
+        }).join("");
+      })()}
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Ирц бүртгэл (нийт ${attTotal} өдөр)</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
+      <div style="background:#f0fdf4;padding:14px;border-radius:10px;text-align:center;border:1px solid #bbf7d0">
+        <div style="font-size:24px;color:#10b981;font-weight:700">${attStats.present}</div>
+        <div style="font-size:12px;color:var(--muted)">✓ Ирсэн</div></div>
+      <div style="background:#fef2f2;padding:14px;border-radius:10px;text-align:center;border:1px solid #fecaca">
+        <div style="font-size:24px;color:#dc2626;font-weight:700">${attStats.absent}</div>
+        <div style="font-size:12px;color:var(--muted)">✗ Тасалсан</div></div>
+      <div style="background:#fffbeb;padding:14px;border-radius:10px;text-align:center;border:1px solid #fde68a">
+        <div style="font-size:24px;color:#f59e0b;font-weight:700">${attStats.late}</div>
+        <div style="font-size:12px;color:var(--muted)">⏰ Хоцорсон</div></div>
+      <div style="background:#f5f3ff;padding:14px;border-radius:10px;text-align:center;border:1px solid #ddd6fe">
+        <div style="font-size:24px;color:#8b5cf6;font-weight:700">${attStats.sick}</div>
+        <div style="font-size:12px;color:var(--muted)">🤒 Өвчтэй</div></div>
+    </div>
+
+    <h3 style="font-size:15px;margin:24px 0 12px">Үнэлгээний бичлэг</h3>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px">
+      <div style="background:var(--card);padding:14px;border-radius:10px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:24px;font-weight:700">${startN}</div>
+        <div style="font-size:12px;color:var(--muted)">🌱 Гарааны</div></div>
+      <div style="background:var(--card);padding:14px;border-radius:10px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:24px;font-weight:700">${progN}</div>
+        <div style="font-size:12px;color:var(--muted)">📈 Явцын</div></div>
+      <div style="background:var(--card);padding:14px;border-radius:10px;text-align:center;border:1px solid var(--border)">
+        <div style="font-size:24px;font-weight:700">${resultN}</div>
+        <div style="font-size:12px;color:var(--muted)">🏆 Үр дүн</div></div>
+    </div>`;
+}
+function renderCriteria(child, readonly) {
+  const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === child.id));
+  const level = groupToLevel[g?g.id:'baga'] || 1;
+  const checks = CRITERIA_CHECKS[child.id] || {};
+  const cats = CRITERIA[level];
+  let total = 0, done = 0;
+  Object.values(cats).forEach(arr => { total += arr.length; arr.forEach((_,i) => { if (checks[level+"-"+(i+1)]?.checked) done++; }); });
+  let idx = 0;
+  const html = Object.entries(cats).map(([cat, arr]) => `
+    <h3 style="font-size:15px;margin:20px 0 10px;padding:8px 12px;background:var(--bg);border-radius:6px">${cat} — ${arr.length}</h3>
+    ${arr.map(text => {
+      idx++;
+      const key = level+"-"+idx;
+      const c = checks[key];
+      const isChecked = c?.checked;
+      return `
+        <div style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;border-bottom:1px solid var(--border);${isChecked?'background:#f0fdf4':''}">
+          <div style="min-width:24px;font-size:12px;color:var(--muted);padding-top:2px">${idx}</div>
+          <label style="flex:1;cursor:${readonly?'default':'pointer'};display:flex;gap:10px;align-items:flex-start">
+            <input type="checkbox" ${isChecked?'checked':''} ${readonly?'disabled':''} onchange="toggleCriterion('${child.id}',${level},${idx})" style="margin-top:3px;width:18px;height:18px;cursor:${readonly?'default':'pointer'}">
+            <div style="flex:1">
+              <div style="font-size:14px;${isChecked?'color:var(--muted)':''}">${escapeHTML(text)}</div>
+              ${c?.checked_at?`<div style="font-size:11px;color:var(--muted);margin-top:2px">✓ ${new Date(c.checked_at).toLocaleDateString('mn-MN')}</div>`:''}
+            </div>
+          </label>
+        </div>`;
+    }).join("")}`).join("");
+  return `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+        <div><strong>${level}-р түвшний шалгуур</strong> · ${done}/${total} биелсэн</div>
+        <div style="flex:1;min-width:200px;height:8px;background:var(--bg);border-radius:4px;overflow:hidden">
+          <div style="width:${total?Math.round(done/total*100):0}%;height:100%;background:#10b981;transition:width 0.3s"></div>
+        </div>
+        <strong style="color:#10b981">${total?Math.round(done/total*100):0}%</strong>
+      </div>
+    </div>
+    ${html}`;
+}
+async function toggleCriterion(childId, level, num) {
+  const key = level+"-"+num;
+  const cur = CRITERIA_CHECKS[childId]?.[key];
+  if (cur) {
+    await sb.from('criteria_checks').update({checked: !cur.checked, checked_at: !cur.checked ? new Date().toISOString() : null}).eq('id', cur.id);
+  } else {
+    await sb.from('criteria_checks').insert({child_id: childId, level, criterion_num: num, checked: true, checked_at: new Date().toISOString()});
+  }
+  await loadAll(); render();
+}
+// ============ ANNOUNCEMENTS ============
+function renderAnnouncements() {
+  const isTeacher = state.role === 'teacher';
+  const filter = state.annFilter || 'all';
+  const items = ANNOUNCEMENTS.filter(a => filter === 'all' || a.kind === filter);
+  const backTo = isTeacher ? "goHome()" : "state.view='parentView';render()";
+  return `
+    <div class="breadcrumb"><a onclick="${backTo}">${isTeacher?'Нүүр':'← Хүүхдийн мэдээлэл'}</a><span class="sep">›</span><span>Зар мэдээ</span></div>
+    <div class="toolbar">
+      <div><h2 class="section">📢 Зар мэдээ, өдөр тутмын үйл ажиллагаа</h2>
+        <p class="section-desc" style="margin:0">${ANNOUNCEMENTS.length} бичлэг</p></div>
+      ${isTeacher?`<button class="btn" onclick="openAnnModal()">+ Шинэ бичлэг</button>`:''}
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap">
+      <button class="btn btn-sm ${filter==='all'?'':'btn-secondary'}" onclick="state.annFilter='all';render()">Бүгд</button>
+      <button class="btn btn-sm ${filter==='announcement'?'':'btn-secondary'}" onclick="state.annFilter='announcement';render()">📣 Зар мэдээ</button>
+      <button class="btn btn-sm ${filter==='activity'?'':'btn-secondary'}" onclick="state.annFilter='activity';render()">🎯 Өдөр тутмын үйл ажиллагаа</button>
+    </div>
+    ${items.length===0?`<div class="empty">Бичлэг байхгүй</div>`:
+    `<div class="lesson-list">${items.map(a => `
+      <div class="lesson-item">
+        <div class="info">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+            ${a.pinned?'<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">📌 Онцгой</span>':''}
+            <span style="background:${a.kind==='announcement'?'#dbeafe':'#dcfce7'};color:${a.kind==='announcement'?'#1e40af':'#166534'};padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">
+              ${a.kind==='announcement'?'📣 Зар':'🎯 Үйл ажиллагаа'}
+            </span>
+            <span style="font-size:12px;color:var(--muted)">${new Date(a.created_at).toLocaleDateString('mn-MN')}</span>
+            ${a.event_date?`<span style="font-size:12px;color:var(--muted)">· 📅 ${a.event_date}</span>`:''}
+          </div>
+          <h4 style="font-size:16px">${escapeHTML(a.title)}</h4>
+          ${a.text?`<div style="margin-top:8px;white-space:pre-wrap">${escapeHTML(a.text)}</div>`:''}
+          ${a.media && a.media.length?`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">${a.media.map(m=>renderMediaItem(m)).join("")}</div>`:''}
+          ${a.files && a.files.length?`<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+            ${a.files.map(f=>`<a href="${escapeAttr(f.src)}" target="_blank" style="padding:8px 12px;background:var(--bg);border-radius:6px;text-decoration:none;color:var(--accent);font-size:13px">📎 ${escapeHTML(f.label||f.src)}</a>`).join("")}
+          </div>`:''}
+        </div>
+        ${isTeacher?`<div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="togglePin('${a.id}',${!a.pinned})">${a.pinned?'📌 Хас':'📌 Онцгой'}</button>
+          <button class="btn btn-secondary btn-sm" onclick="openAnnModal('${a.id}')">Засах</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteAnn('${a.id}')">Устгах</button>
+        </div>`:''}
+      </div>`).join("")}</div>`}`;
+}
+function openAnnModal(id) {
+  const a = id ? ANNOUNCEMENTS.find(x=>x.id===id) : null;
+  showModal(`
+    <h3>${a?'Засах':'Шинэ бичлэг'}</h3>
+    <form onsubmit="return saveAnn(event,'${id||''}')">
+      <div class="form-group"><label>Төрөл</label>
+        <select class="input" id="a-kind">
+          <option value="announcement" ${a&&a.kind==='announcement'?'selected':''}>📣 Зар мэдээ</option>
+          <option value="activity" ${a&&a.kind==='activity'?'selected':''}>🎯 Өдөр тутмын үйл ажиллагаа</option>
+        </select></div>
+      <div class="form-group"><label>Гарчиг</label>
+        <input class="input" id="a-title" required value="${a?escapeAttr(a.title):''}"></div>
+      <div class="form-group"><label>Огноо (заавал биш — арга хэмжээ болох өдөр)</label>
+        <input class="input" id="a-date" type="date" value="${a?(a.event_date||''):''}"></div>
+      <div class="form-group"><label>Тайлбар</label>
+        <textarea class="input" id="a-text" style="min-height:100px">${a?escapeHTML(a.text||''):''}</textarea></div>
+      <div class="form-group"><label>Зураг / бичлэг</label>
+        <input class="input" id="a-media" type="file" accept="image/*,video/*" multiple></div>
+      <div class="form-group"><label>Файл хавсаргах (PDF, Word гэх мэт)</label>
+        <input class="input" id="a-files" type="file" multiple></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="a-save">Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveAnn(ev, id) {
+  ev.preventDefault();
+  const btn = document.getElementById("a-save"); btn.disabled=true; btn.textContent="Хадгалж байна...";
+  const kind = document.getElementById("a-kind").value;
+  const title = document.getElementById("a-title").value.trim();
+  const event_date = document.getElementById("a-date").value || null;
+  const text = document.getElementById("a-text").value.trim();
+  const mediaFiles = document.getElementById("a-media").files;
+  const attFiles = document.getElementById("a-files").files;
+  const existing = id ? ANNOUNCEMENTS.find(x=>x.id===id) : null;
+  const media = existing ? [...(existing.media||[])] : [];
+  const files = existing ? [...(existing.files||[])] : [];
+  for (const f of mediaFiles) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  for (const f of attFiles) {
+    const src = await uploadFile(f);
+    if (src) files.push({ src, label: f.name });
+  }
+  const data = { kind, title, event_date, text, media, files };
+  if (id) await sb.from('announcements').update(data).eq('id', id);
+  else await sb.from('announcements').insert(data);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function togglePin(id, pinned) {
+  await sb.from('announcements').update({pinned}).eq('id', id);
+  await loadAll(); render();
+}
+async function deleteAnn(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('announcements').delete().eq('id', id);
+  await loadAll(); render();
+}
+
+// ============ BULK IMPORT CHILDREN ============
+function openBulkImport() {
+  showModal(`
+    <h3>📋 Хүүхдийг олноор нэмэх</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Хүүхдийн нэрсийг мөр мөрөөр (эсвэл Excel, Word-ноос хуулж) буулгана уу. Эцэг эхийн код автоматаар үүсэнэ.</p>
+    <div class="form-group">
+      <label>Хүүхдийн нэрс (мөр тус бүрд нэг нэр)</label>
+      <textarea class="input" id="bulk-names" style="min-height:200px;font-family:monospace" placeholder="Ж.Батбаяр&#10;Б.Оюунтуяа&#10;Д.Мөнгөнцэцэг&#10;..."></textarea>
+    </div>
+    <div class="form-group">
+      <label>Төрсөн он (заавал биш — бүгдэд адилхан)</label>
+      <input class="input" id="bulk-year" placeholder="Жишээ: 2020">
+    </div>
+    <div id="bulk-preview" style="font-size:13px;color:var(--muted);margin-bottom:10px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Болих</button>
+      <button class="btn" id="bulk-save" onclick="bulkSaveChildren()">Нэмэх</button>
+    </div>`);
+  document.getElementById("bulk-names").addEventListener("input", (e) => {
+    const lines = e.target.value.split("\n").map(s=>s.trim()).filter(Boolean);
+    document.getElementById("bulk-preview").textContent = `${lines.length} нэр илэрлээ`;
+  });
+}
+async function bulkSaveChildren() {
+  const raw = document.getElementById("bulk-names").value;
+  const year = document.getElementById("bulk-year").value.trim();
+  const names = raw.split("\n").map(s=>s.trim()).filter(Boolean);
+  if (names.length === 0) { alert("Ямар ч нэр оруулаагүй байна"); return; }
+  if (!confirm(`${names.length} хүүхэд нэмэх үү?`)) return;
+  const btn = document.getElementById("bulk-save"); btn.disabled=true; btn.textContent="Нэмэж байна...";
+  const rows = names.map(name => ({
+    group_id: state.assessGroup, name, birth_year: year||null,
+    parent_code: Math.random().toString(36).substring(2,8).toUpperCase()
+  }));
+  const { error } = await sb.from('children').insert(rows);
+  if (error) { alert("Алдаа: "+error.message); btn.disabled=false; btn.textContent="Нэмэх"; return; }
+  await loadAll(); closeModal(); render();
+}
+
+// ============ SUMMARY VIEW (үнэлгээний нэгтгэл систем дээр) ============
+function renderSummary() {
+  const g = GROUPS.find(x => x.id === state.assessGroup);
+  const list = CHILDREN[state.assessGroup] || [];
+  const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  const level = groupToLevel[state.assessGroup] || 1;
+  const tab = state.sumTab || 'general';
+  const tabs = [
+    { id:"general", name:"📊 Ерөнхий шалгуур" },
+    { id:"music", name:"🎵 Хөгжим шалгуур" },
+    { id:"attendance", name:"📅 Ирц" }
+  ];
+  let content = "";
+  if (tab === "general") content = renderGeneralSummary(list, level);
+  else if (tab === "music") content = renderMusicSummary(list, level);
+  else if (tab === "attendance") content = renderAttendanceSummary(list);
+  return `
+    <div class="breadcrumb">
+      <a onclick="goHome()">Нүүр</a><span class="sep">›</span>
+      <a onclick="state.view='assessGroups';render()">Үнэлгээ</a><span class="sep">›</span>
+      <a onclick="state.view='assessChildren';render()">${g.name}</a><span class="sep">›</span>
+      <span>Нэгтгэл</span>
+    </div>
+    <div class="toolbar">
+      <div><h2 class="section">📊 ${g.name} — Үнэлгээний нэгтгэл</h2>
+        <p class="section-desc" style="margin:0">${list.length} хүүхэд · ${level}-р түвшин</p></div>
+      <button class="btn btn-secondary" onclick="showExportMenu('${state.assessGroup}')">📥 Excel татах</button>
+    </div>
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+      ${tabs.map(t => `<button class="btn btn-sm ${tab===t.id?'':'btn-secondary'}" onclick="state.sumTab='${t.id}';render()">${t.name}</button>`).join("")}
+    </div>
+    <div style="overflow-x:auto;background:var(--card);border:1px solid var(--border);border-radius:10px">
+      ${content}
+    </div>`;
+}
+function tableStyle() {
+  return `<style>
+    .stbl{width:100%;border-collapse:collapse;font-size:12px}
+    .stbl th,.stbl td{border:1px solid var(--border);padding:6px 8px;text-align:center}
+    .stbl th{background:var(--bg);font-weight:600;position:sticky;top:0}
+    .stbl td.n{text-align:left;white-space:nowrap}
+    .stbl .y{background:#f0fdf4;color:#065f46}
+    .stbl .p{background:#fffbeb;color:#92400e}
+    .stbl .no{background:#fef2f2;color:#991b1b}
+    .stbl tr:hover td{background:#f9fafb}
+  </style>`;
+}
+function renderGeneralSummary(list, level) {
+  const cats = CRITERIA[level];
+  const info = [];
+  let n = 0;
+  Object.entries(cats).forEach(([cat, arr]) => arr.forEach(t => { n++; info.push({num:n, cat, text:t}); }));
+  if (list.length === 0) return `<div class="empty">Хүүхэд байхгүй</div>`;
+  return `${tableStyle()}
+    <table class="stbl">
+      <thead>
+        <tr><th style="min-width:30px">№</th><th style="min-width:150px;text-align:left">Хүүхдийн нэр</th>
+          ${info.map(x=>`<th title="${escapeAttr(x.cat+': '+x.text)}">${x.num}</th>`).join("")}
+          <th style="min-width:60px">Нийт %</th></tr>
+      </thead>
+      <tbody>
+        ${list.map((c, i) => {
+          const checks = CRITERIA_CHECKS[c.id] || {};
+          let done = 0;
+          const cells = info.map(x => { const v = checks[level+"-"+x.num]?.checked; if (v) done++; return v?'<td class="y">✓</td>':'<td></td>'; }).join("");
+          const pct = n?Math.round(done/n*100):0;
+          return `<tr><td>${i+1}</td><td class="n">${escapeHTML(c.name)}</td>${cells}<td><strong>${pct}%</strong></td></tr>`;
+        }).join("")}
+      </tbody>
+    </table>
+    <div style="padding:10px;font-size:11px;color:var(--muted)">💡 Дугаар дээр хулгана хүргэхэд шалгуурын нэр гарна</div>`;
+}
+function renderMusicSummary(list, level) {
+  const mcats = MUSIC_CRITERIA[level];
+  const info = [];
+  Object.entries(mcats).forEach(([cat, arr]) => arr.forEach((t, i) => info.push({num:info.length+1, cat, sub:i+1, text:t})));
+  if (list.length === 0) return `<div class="empty">Хүүхэд байхгүй</div>`;
+  return `${tableStyle()}
+    <table class="stbl">
+      <thead>
+        <tr><th style="min-width:30px">№</th><th style="min-width:150px;text-align:left">Хүүхдийн нэр</th>
+          ${info.map(x=>`<th title="${escapeAttr(x.cat+': '+x.text)}">${x.num}</th>`).join("")}
+          <th style="min-width:60px">Нийт %</th></tr>
+      </thead>
+      <tbody>
+        ${list.map((c, i) => {
+          const checks = MUSIC_CHECKS[c.id] || {};
+          let score = 0;
+          const cells = info.map(x => {
+            const st = checks[level+"|"+x.cat+"|"+x.sub]?.status;
+            if (st==='yes') { score += 1; return '<td class="y">✓</td>'; }
+            if (st==='partial') { score += 0.5; return '<td class="p">~</td>'; }
+            if (st==='no') return '<td class="no">✗</td>';
+            return '<td></td>';
+          }).join("");
+          const pct = info.length?Math.round(score/info.length*100):0;
+          return `<tr><td>${i+1}</td><td class="n">${escapeHTML(c.name)}</td>${cells}<td><strong>${pct}%</strong></td></tr>`;
+        }).join("")}
+      </tbody>
+    </table>
+    <div style="padding:10px;font-size:11px;color:var(--muted)">💡 ✓ Тийм · ~ Хэсэгчлэн · ✗ Үгүй. Дугаар дээр хулгана хүргэхэд үзүүлэлт гарна</div>`;
+}
+function renderAttendanceSummary(list) {
+  if (list.length === 0) return `<div class="empty">Хүүхэд байхгүй</div>`;
+  const dateSet = new Set();
+  list.forEach(c => { const att = ATTENDANCE[c.id]||{}; Object.keys(att).forEach(d => dateSet.add(d)); });
+  const dates = [...dateSet].sort();
+  return `${tableStyle()}
+    <table class="stbl">
+      <thead>
+        <tr><th style="min-width:30px">№</th><th style="min-width:150px;text-align:left">Хүүхдийн нэр</th>
+          ${dates.map(d=>`<th title="${d}">${d.substring(5)}</th>`).join("")}
+          <th>✓</th><th>✗</th><th>⏰</th><th>🤒</th></tr>
+      </thead>
+      <tbody>
+        ${list.map((c, i) => {
+          const att = ATTENDANCE[c.id]||{};
+          const sum = {present:0, absent:0, late:0, sick:0};
+          const cells = dates.map(d => {
+            const s = att[d]?.status;
+            if (s === 'present') { sum.present++; return '<td class="y">✓</td>'; }
+            if (s === 'absent') { sum.absent++; return '<td class="no">✗</td>'; }
+            if (s === 'late') { sum.late++; return '<td class="p">⏰</td>'; }
+            if (s === 'sick') { sum.sick++; return '<td class="p">🤒</td>'; }
+            return '<td></td>';
+          }).join("");
+          return `<tr><td>${i+1}</td><td class="n">${escapeHTML(c.name)}</td>${cells}<td><strong>${sum.present}</strong></td><td>${sum.absent}</td><td>${sum.late}</td><td>${sum.sick}</td></tr>`;
+        }).join("")}
+      </tbody>
+    </table>`;
+}
+
+// ============ METHODIST NOTES (арга зүйч, эрхлэгч) ============
+function renderMethodist() {
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Арга зүйч</span></div>
+    <div class="toolbar">
+      <div><h2 class="section">👔 Арга зүйч, эрхлэгчийн хэсэг</h2>
+        <p class="section-desc" style="margin:0">Хяналт, зөвлөгөө, арга зүйн заавар</p></div>
+      <button class="btn" onclick="openMethodistModal()">+ Шинэ зөвлөгөө/заавар</button>
+    </div>
+    ${METHODIST_NOTES.length===0?`<div class="empty">Бичлэг байхгүй байна</div>`:
+    `<div class="lesson-list">${METHODIST_NOTES.map(m => `
+      <div class="lesson-item">
+        <div class="info">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+            <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600">
+              ${escapeHTML(m.from_role||'Арга зүйч')}
+            </span>
+            <span style="font-size:13px;font-weight:600">${escapeHTML(m.from_name)}</span>
+            <span style="font-size:12px;color:var(--muted)">· ${new Date(m.created_at).toLocaleString('mn-MN')}</span>
+          </div>
+          <h4 style="font-size:16px">${escapeHTML(m.title)}</h4>
+          ${m.text?`<div style="margin-top:8px;white-space:pre-wrap">${escapeHTML(m.text)}</div>`:''}
+          ${m.media && m.media.length?`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">${m.media.map(mm=>renderMediaItem(mm)).join("")}</div>`:''}
+          ${m.files && m.files.length?`<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+            ${m.files.map(f=>`<a href="${escapeAttr(f.src)}" target="_blank" style="padding:8px 12px;background:var(--bg);border-radius:6px;text-decoration:none;color:var(--accent);font-size:13px">📎 ${escapeHTML(f.label||f.src)}</a>`).join("")}
+          </div>`:''}
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openMethodistModal('${m.id}')">Засах</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteMethodist('${m.id}')">Устгах</button>
+        </div>
+      </div>`).join("")}</div>`}`;
+}
+function openMethodistModal(id) {
+  const m = id ? METHODIST_NOTES.find(x=>x.id===id) : null;
+  showModal(`
+    <h3>${m?"Засах":"Шинэ зөвлөгөө / заавар"}</h3>
+    <form onsubmit="return saveMethodist(event,'${id||''}')">
+      <div class="form-group"><label>Албан тушаал</label>
+        <select class="input" id="m-role">
+          <option ${m&&m.from_role==='Арга зүйч'?'selected':''}>Арга зүйч</option>
+          <option ${m&&m.from_role==='Эрхлэгч'?'selected':''}>Эрхлэгч</option>
+          <option ${m&&m.from_role==='Ахлах багш'?'selected':''}>Ахлах багш</option>
+          <option ${m&&m.from_role==='Хяналтын багш'?'selected':''}>Хяналтын багш</option>
+        </select></div>
+      <div class="form-group"><label>Овог, нэр</label>
+        <input class="input" id="m-name" required value="${m?escapeAttr(m.from_name):''}"></div>
+      <div class="form-group"><label>Гарчиг / Сэдэв</label>
+        <input class="input" id="m-title" required value="${m?escapeAttr(m.title):''}"></div>
+      <div class="form-group"><label>Заавар / зөвлөгөө / тайлбар</label>
+        <textarea class="input" id="m-text" style="min-height:120px">${m?escapeHTML(m.text||''):''}</textarea></div>
+      <div class="form-group"><label>Зураг / бичлэг</label>
+        <input class="input" id="m-media" type="file" accept="image/*,video/*" multiple></div>
+      <div class="form-group"><label>Текст файл (Word, PDF, TXT)</label>
+        <input class="input" id="m-files" type="file" multiple></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="m-save">Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveMethodist(ev, id) {
+  ev.preventDefault();
+  const btn = document.getElementById("m-save"); btn.disabled=true; btn.textContent="Хадгалж байна...";
+  const from_role = document.getElementById("m-role").value;
+  const from_name = document.getElementById("m-name").value.trim();
+  const title = document.getElementById("m-title").value.trim();
+  const text = document.getElementById("m-text").value.trim();
+  const mediaFiles = document.getElementById("m-media").files;
+  const attFiles = document.getElementById("m-files").files;
+  const existing = id ? METHODIST_NOTES.find(x=>x.id===id) : null;
+  const media = existing ? [...(existing.media||[])] : [];
+  const files = existing ? [...(existing.files||[])] : [];
+  for (const f of mediaFiles) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  for (const f of attFiles) {
+    const src = await uploadFile(f);
+    if (src) files.push({ src, label: f.name });
+  }
+  const data = { from_role, from_name, title, text, media, files };
+  if (id) await sb.from('methodist_notes').update(data).eq('id', id);
+  else await sb.from('methodist_notes').insert(data);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteMethodist(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('methodist_notes').delete().eq('id', id);
+  await loadAll(); render();
+}
+
+// ============ EXCEL EXPORT ============
+function exportExcel(groupId, kind) {
+  const g = GROUPS.find(x=>x.id===groupId);
+  const list = CHILDREN[groupId] || [];
+  const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  const level = groupToLevel[groupId] || 1;
+  const wb = XLSX.utils.book_new();
+  const stamp = new Date().toISOString().substring(0,10);
+
+  const save = (ws, sheetName, fileName) => {
+    XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    XLSX.writeFile(wb, `${g.name}_${fileName}_${stamp}.xlsx`);
+  };
+
+  if (kind === 'general-summary') {
+    const cats = CRITERIA[level];
+    const headers = ["№", "Хүүхдийн нэр"];
+    let n = 0;
+    Object.entries(cats).forEach(([cat, arr]) => arr.forEach(() => { n++; headers.push(`${n}`); }));
+    headers.push("Нийт %");
+    const rows = [headers];
+    list.forEach((c, i) => {
+      const checks = CRITERIA_CHECKS[c.id] || {};
+      const row = [i+1, c.name];
+      let done = 0;
+      for (let k = 1; k <= n; k++) {
+        const v = checks[level+"-"+k]?.checked;
+        row.push(v ? "✓" : "");
+        if (v) done++;
+      }
+      row.push(n?Math.round(done/n*100)+"%":"—");
+      rows.push(row);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:5},{wch:25}, ...Array(n).fill({wch:5}), {wch:10}];
+    save(ws, "Ерөнхий шалгуур", "ерөнхий_шалгуур_нэгтгэл");
+  }
+
+  else if (kind === 'general-list') {
+    const cats = CRITERIA[level];
+    const rows = [["№","Ангилал","Шалгуурын нэр"]];
+    let n = 0;
+    Object.entries(cats).forEach(([cat, arr]) => arr.forEach(t => { n++; rows.push([n, cat, t]); }));
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:5},{wch:20},{wch:80}];
+    save(ws, "Шалгуурын нэрс", "ерөнхий_шалгуур_үзүүлэлт");
+  }
+
+  else if (kind === 'music-summary') {
+    const mcats = MUSIC_CRITERIA[level];
+    const info = [];
+    Object.entries(mcats).forEach(([cat, arr]) => arr.forEach((t, i) => info.push({cat, num:i+1, text:t})));
+    const headers = ["№", "Хүүхдийн нэр", ...info.map((_,i)=>`${i+1}`), "Нийт %"];
+    const rows = [headers];
+    list.forEach((c, i) => {
+      const checks = MUSIC_CHECKS[c.id] || {};
+      const row = [i+1, c.name];
+      let score = 0;
+      info.forEach(x => {
+        const st = checks[level+"|"+x.cat+"|"+x.num]?.status;
+        row.push(st==='yes'?"✓ Тийм":st==='partial'?"~ Хэсэг":st==='no'?"✗ Үгүй":"");
+        if (st==='yes') score += 1; else if (st==='partial') score += 0.5;
+      });
+      row.push(info.length?Math.round(score/info.length*100)+"%":"—");
+      rows.push(row);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:5},{wch:25}, ...Array(info.length).fill({wch:10}), {wch:10}];
+    save(ws, "Хөгжмийн шалгуур", "хөгжим_шалгуур_нэгтгэл");
+  }
+
+  else if (kind === 'music-list') {
+    const mcats = MUSIC_CRITERIA[level];
+    const rows = [["№","Дэд ай","Үзүүлэлт"]];
+    let n = 0;
+    Object.entries(mcats).forEach(([cat, arr]) => arr.forEach(t => { n++; rows.push([n, cat, t]); }));
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:5},{wch:35},{wch:80}];
+    save(ws, "Үзүүлэлтийн нэрс", "хөгжим_шалгуур_үзүүлэлт");
+  }
+
+  else if (kind === 'music-notes') {
+    const mcats = MUSIC_CRITERIA[level];
+    const info = [];
+    Object.entries(mcats).forEach(([cat, arr]) => arr.forEach((t, i) => info.push({cat, num:i+1, text:t})));
+    const rows = [["№","Хүүхдийн нэр","Үзүүлэлт","Үнэлгээ","Тайлбар"]];
+    list.forEach(c => {
+      const checks = MUSIC_CHECKS[c.id] || {};
+      info.forEach((x, i) => {
+        const rec = checks[level+"|"+x.cat+"|"+x.num];
+        if (rec?.note) {
+          const st = rec.status;
+          rows.push([i+1, c.name, x.text, st==='yes'?"Тийм":st==='partial'?"Хэсэгчлэн":st==='no'?"Үгүй":"—", rec.note]);
+        }
+      });
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:5},{wch:25},{wch:60},{wch:12},{wch:60}];
+    save(ws, "Тайлбарууд", "хөгжим_шалгуур_тайлбар");
+  }
+
+  else if (kind === 'attendance') {
+    const dateSet = new Set();
+    list.forEach(c => { const att = ATTENDANCE[c.id]||{}; Object.keys(att).forEach(d => dateSet.add(d)); });
+    const dates = [...dateSet].sort();
+    const rows = [["№","Хүүхдийн нэр", ...dates, "Ирсэн","Тасалсан","Хоцорсон","Өвчтэй"]];
+    list.forEach((c, i) => {
+      const att = ATTENDANCE[c.id]||{};
+      const row = [i+1, c.name];
+      const sum = {present:0, absent:0, late:0, sick:0};
+      for (const d of dates) {
+        const s = att[d]?.status;
+        row.push(s==='present'?'✓':s==='absent'?'✗':s==='late'?'⏰':s==='sick'?'🤒':'');
+        if (s && sum[s]!==undefined) sum[s]++;
+      }
+      row.push(sum.present, sum.absent, sum.late, sum.sick);
+      rows.push(row);
+    });
+    const ws = XLSX.utils.aoa_to_sheet(rows);
+    ws['!cols'] = [{wch:5},{wch:25}, ...dates.map(()=>({wch:12})), {wch:10},{wch:10},{wch:10},{wch:10}];
+    save(ws, "Ирц", "ирц");
+  }
+}
+function showExportMenu(groupId) {
+  showModal(`
+    <h3>📊 Excel татах</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:16px">Аль файлыг татах вэ? Тус бүр тусдаа файлаар татагдана.</p>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left" onclick="closeModal();exportExcel('${groupId}','general-summary')">📊 Ерөнхий шалгуур — <strong>үнэлгээний нэгтгэл</strong></button>
+      <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left" onclick="closeModal();exportExcel('${groupId}','general-list')">📋 Ерөнхий шалгуур — <strong>үзүүлэлтийн нэрс</strong></button>
+      <div style="height:1px;background:var(--border);margin:4px 0"></div>
+      <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left" onclick="closeModal();exportExcel('${groupId}','music-summary')">🎵 Хөгжим шалгуур — <strong>үнэлгээний нэгтгэл</strong></button>
+      <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left" onclick="closeModal();exportExcel('${groupId}','music-list')">🎼 Хөгжим шалгуур — <strong>үзүүлэлтийн нэрс</strong></button>
+      <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left" onclick="closeModal();exportExcel('${groupId}','music-notes')">📝 Хөгжим шалгуур — <strong>тайлбарууд</strong></button>
+      <div style="height:1px;background:var(--border);margin:4px 0"></div>
+      <button class="btn btn-secondary" style="justify-content:flex-start;text-align:left" onclick="closeModal();exportExcel('${groupId}','attendance')">📅 Хичээлийн <strong>ирц</strong></button>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Хаах</button>
+    </div>`);
+}
+
+// ============ ATTENDANCE ============
+function renderAttendanceGroups() {
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Ирц</span></div>
+    <h2 class="section">📋 Хичээлийн ирц</h2>
+    <p class="section-desc">Бүлгээ сонго</p>
+    <div class="grid">
+      ${GROUPS.map(g => `
+        <div class="card" onclick="state.assessGroup='${g.id}';state.attDate=new Date().toISOString().substring(0,10);state.view='attendance';render()">
+          <h3>${g.name}</h3><p>${g.age}</p>
+          <span class="badge">${(CHILDREN[g.id]||[]).length} хүүхэд</span>
+        </div>`).join("")}
+    </div>`;
+}
+function renderAttendance() {
+  const g = GROUPS.find(x => x.id === state.assessGroup);
+  const list = CHILDREN[state.assessGroup] || [];
+  const date = state.attDate;
+  const statuses = [
+    { id:"present", label:"✓ Ирсэн", color:"#10b981" },
+    { id:"absent", label:"✗ Тасалсан", color:"#dc2626" },
+    { id:"late", label:"⏰ Хоцорсон", color:"#f59e0b" },
+    { id:"sick", label:"🤒 Өвчтэй", color:"#8b5cf6" }
+  ];
+  const sum = { present:0, absent:0, late:0, sick:0 };
+  list.forEach(c => { const s = ATTENDANCE[c.id]?.[date]?.status; if (s) sum[s]++; });
+  return `
+    <div class="breadcrumb">
+      <a onclick="goHome()">Нүүр</a><span class="sep">›</span>
+      <a onclick="state.view='attendanceGroups';render()">Ирц</a><span class="sep">›</span>
+      <span>${g.name}</span>
+    </div>
+    <h2 class="section">${g.name} — Ирц</h2>
+    <div style="display:flex;gap:14px;align-items:center;margin-bottom:20px;flex-wrap:wrap">
+      <label style="font-size:13px;color:var(--muted)">Огноо:</label>
+      <input type="date" class="input" style="width:auto" value="${date}" onchange="state.attDate=this.value;render()">
+      <div style="display:flex;gap:10px;font-size:13px;flex-wrap:wrap">
+        <span style="color:#10b981">✓ ${sum.present}</span>
+        <span style="color:#dc2626">✗ ${sum.absent}</span>
+        <span style="color:#f59e0b">⏰ ${sum.late}</span>
+        <span style="color:#8b5cf6">🤒 ${sum.sick}</span>
+      </div>
+    </div>
+    ${list.length===0?`<div class="empty">Хүүхэд бүртгэлгүй</div>`:
+    `<div class="lesson-list">${list.map(c => {
+      const cur = ATTENDANCE[c.id]?.[date]?.status;
+      return `
+        <div class="lesson-item">
+          <div class="info"><h4>${escapeHTML(c.name)}</h4></div>
+          <div class="actions">
+            ${statuses.map(s => `
+              <button class="btn btn-sm" onclick="markAttendance('${c.id}','${s.id}')"
+                style="${cur===s.id?`background:${s.color};color:white`:'background:transparent;color:'+s.color+';border:1px solid var(--border)'}">${s.label}</button>
+            `).join("")}
+          </div>
+        </div>`;
+    }).join("")}</div>`}`;
+}
+async function markAttendance(childId, status) {
+  const date = state.attDate;
+  const existing = ATTENDANCE[childId]?.[date];
+  if (existing) {
+    if (existing.status === status) await sb.from('attendance').delete().eq('id', existing.id);
+    else await sb.from('attendance').update({status}).eq('id', existing.id);
+  } else {
+    await sb.from('attendance').insert({child_id: childId, date, status});
+  }
+  await loadAll(); render();
+}
+
+// ============ EVENTS ============
+function renderEvents() {
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Тоглолт</span></div>
+    <div class="toolbar">
+      <div><h2 class="section">🎭 Тайлант тоглолт, өдөрлөг</h2>
+        <p class="section-desc" style="margin:0">${EVENTS.length} арга хэмжээ</p></div>
+      <button class="btn" onclick="openEventModal()">+ Шинэ тоглолт</button>
+    </div>
+    ${EVENTS.length===0?`<div class="empty">Арга хэмжээ бүртгэлгүй</div>`:
+    `<div class="lesson-list">${EVENTS.map(e => `
+      <div class="lesson-item">
+        <div class="info">
+          <h4>${escapeHTML(e.title)}</h4>
+          ${e.event_date?`<div class="meta"><strong>Огноо:</strong> ${e.event_date}</div>`:''}
+          ${e.group_ids && e.group_ids.length?`<div class="meta"><strong>Бүлэг:</strong> ${e.group_ids.map(gid=>{const g=GROUPS.find(x=>x.id===gid);return g?g.name:gid}).join(", ")}</div>`:''}
+          ${e.songs && e.songs.length?`<div class="meta"><strong>Дуу:</strong> ${e.songs.join(", ")}</div>`:''}
+          ${e.description?`<div style="margin-top:8px;white-space:pre-wrap">${escapeHTML(e.description)}</div>`:''}
+          ${e.notes?`<div class="meta" style="margin-top:6px"><strong>Тэмдэглэл:</strong> ${escapeHTML(e.notes)}</div>`:''}
+          ${e.media && e.media.length?`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">${e.media.map(m=>renderMediaItem(m)).join("")}</div>`:''}
+        </div>
+        <div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openEventModal('${e.id}')">Засах</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteEvent('${e.id}')">Устгах</button>
+        </div>
+      </div>`).join("")}</div>`}`;
+}
+function openEventModal(id) {
+  const e = id ? EVENTS.find(x=>x.id===id) : null;
+  showModal(`
+    <h3>${e?"Засах":"Шинэ тоглолт"}</h3>
+    <form onsubmit="return saveEvent(event,'${id||''}')">
+      <div class="form-group"><label>Гарчиг</label>
+        <input class="input" id="ev-title" required value="${e?escapeAttr(e.title):''}"></div>
+      <div class="form-group"><label>Огноо</label>
+        <input class="input" id="ev-date" type="date" value="${e?(e.event_date||''):''}"></div>
+      <div class="form-group"><label>Оролцох бүлгүүд (Ctrl дараад олон сонго)</label>
+        <select class="input" id="ev-groups" multiple size="5" style="height:auto">
+          ${GROUPS.map(g=>`<option value="${g.id}" ${e&&e.group_ids&&e.group_ids.includes(g.id)?'selected':''}>${g.name}</option>`).join("")}
+        </select></div>
+      <div class="form-group"><label>Тоглох дуунууд (таслалаар тусгаарла)</label>
+        <input class="input" id="ev-songs" value="${e&&e.songs?escapeAttr(e.songs.join(", ")):''}"></div>
+      <div class="form-group"><label>Тайлбар</label>
+        <textarea class="input" id="ev-desc">${e?escapeHTML(e.description||''):''}</textarea></div>
+      <div class="form-group"><label>Тэмдэглэл</label>
+        <textarea class="input" id="ev-notes">${e?escapeHTML(e.notes||''):''}</textarea></div>
+      <div class="form-group"><label>Зураг / бичлэг нэмэх</label>
+        <input class="input" id="ev-file" type="file" accept="image/*,video/*" multiple></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="ev-save">Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveEvent(ev, id) {
+  ev.preventDefault();
+  const btn = document.getElementById("ev-save"); btn.disabled=true; btn.textContent="Хадгалж байна...";
+  const title = document.getElementById("ev-title").value.trim();
+  const event_date = document.getElementById("ev-date").value || null;
+  const group_ids = Array.from(document.getElementById("ev-groups").selectedOptions).map(o=>o.value);
+  const songs = document.getElementById("ev-songs").value.split(",").map(s=>s.trim()).filter(Boolean);
+  const description = document.getElementById("ev-desc").value.trim();
+  const notes = document.getElementById("ev-notes").value.trim();
+  const files = document.getElementById("ev-file").files;
+  const existing = id ? EVENTS.find(x=>x.id===id) : null;
+  const media = existing ? [...(existing.media||[])] : [];
+  for (const f of files) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  const data = { title, event_date, group_ids, songs, description, notes, media };
+  if (id) await sb.from('events').update(data).eq('id', id);
+  else await sb.from('events').insert(data);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteEvent(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('events').delete().eq('id', id);
+  await loadAll(); render();
+}
+
+// ============ MESSAGES ============
+function renderMessagesGroups() {
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Зурвас</span></div>
+    <h2 class="section">💬 Эцэг эхтэй харилцах</h2>
+    <p class="section-desc">Бүлгээ сонго</p>
+    <div class="grid">
+      ${GROUPS.map(g => `
+        <div class="card" onclick="state.assessGroup='${g.id}';state.view='messagesChildren';render()">
+          <h3>${g.name}</h3><p>${g.age}</p>
+          <span class="badge">${(CHILDREN[g.id]||[]).length} хүүхэд</span>
+        </div>`).join("")}
+    </div>`;
+}
+function renderMessagesChildren() {
+  const g = GROUPS.find(x => x.id === state.assessGroup);
+  const list = CHILDREN[state.assessGroup] || [];
+  return `
+    <div class="breadcrumb">
+      <a onclick="goHome()">Нүүр</a><span class="sep">›</span>
+      <a onclick="state.view='messagesGroups';render()">Зурвас</a><span class="sep">›</span>
+      <span>${g.name}</span>
+    </div>
+    <h2 class="section">${g.name}</h2>
+    ${list.length===0?`<div class="empty">Хүүхэд байхгүй</div>`:
+    `<div class="lesson-list">${list.map(c => {
+      const msgs = MESSAGES[c.id] || [];
+      const last = msgs[msgs.length-1];
+      const unread = msgs.filter(m => m.from_role === 'parent' && !m.read_at).length;
+      return `
+        <div class="lesson-item" onclick="state.assessChild='${c.id}';state.view='chat';render()" style="cursor:pointer">
+          <div class="info">
+            <h4>${escapeHTML(c.name)} ${unread?`<span style="background:#dc2626;color:white;padding:2px 8px;border-radius:10px;font-size:11px">${unread}</span>`:''}</h4>
+            <div class="meta">${msgs.length} зурвас${last?' · сүүлд: '+new Date(last.created_at).toLocaleDateString('mn-MN'):''}</div>
+          </div>
+          <div class="actions"><button class="btn btn-sm">Нээх →</button></div>
+        </div>`;
+    }).join("")}</div>`}`;
+}
+function renderChat(readonly) {
+  const child = getChild(state.assessChild);
+  if (!child) return `<div class="empty">Хүүхэд олдсонгүй</div>`;
+  const msgs = MESSAGES[child.id] || [];
+  // Mark parent messages as read when teacher opens
+  if (state.role === 'teacher') {
+    setTimeout(async () => {
+      const unread = msgs.filter(m => m.from_role === 'parent' && !m.read_at);
+      for (const m of unread) await sb.from('messages').update({read_at: new Date().toISOString()}).eq('id', m.id);
+    }, 500);
+  }
+  const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === child.id));
+  const bc = state.role === 'teacher' ? `
+    <div class="breadcrumb">
+      <a onclick="goHome()">Нүүр</a><span class="sep">›</span>
+      <a onclick="state.view='messagesGroups';render()">Зурвас</a><span class="sep">›</span>
+      <a onclick="state.view='messagesChildren';render()">${g?g.name:''}</a><span class="sep">›</span>
+      <span>${escapeHTML(child.name)}</span>
+    </div>` : '';
+  return `
+    ${bc}
+    <h2 class="section">💬 ${escapeHTML(child.name)}</h2>
+    <div style="max-height:60vh;overflow-y:auto;padding:10px;background:var(--bg);border-radius:10px;margin-bottom:14px">
+      ${msgs.length===0?`<div class="empty">Зурвас байхгүй байна</div>`:
+      msgs.map(m => `
+        <div style="display:flex;justify-content:${m.from_role==='teacher'?'flex-end':'flex-start'};margin-bottom:8px">
+          <div style="max-width:75%;background:${m.from_role==='teacher'?'#111827':'white'};color:${m.from_role==='teacher'?'white':'var(--text)'};padding:10px 14px;border-radius:12px;border:1px solid var(--border)">
+            <div style="font-size:11px;opacity:0.7;margin-bottom:4px">${m.from_role==='teacher'?'👩‍🏫 Багш':'👨‍👩‍👧 Эцэг эх'} · ${new Date(m.created_at).toLocaleString('mn-MN')}</div>
+            ${m.text?`<div style="white-space:pre-wrap">${escapeHTML(m.text)}</div>`:''}
+            ${m.media && m.media.length?`<div style="display:flex;gap:6px;margin-top:6px;flex-wrap:wrap">${m.media.map(mm=>renderMediaItem(mm)).join("")}</div>`:''}
+          </div>
+        </div>`).join("")}
+    </div>
+    <div style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <textarea id="chat-text" class="input" style="flex:1;min-width:200px;min-height:60px" placeholder="Зурвас бичих..."></textarea>
+      <input type="file" id="chat-file" accept="image/*,video/*" style="display:none" onchange="document.getElementById('chat-file-name').textContent=this.files[0]?this.files[0].name:''">
+      <div style="display:flex;flex-direction:column;gap:4px">
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('chat-file').click()">📎 Файл</button>
+        <span id="chat-file-name" style="font-size:11px;color:var(--muted)"></span>
+      </div>
+      <button class="btn" onclick="sendMessage()">Илгээх</button>
+    </div>`;
+}
+function printChildReport(childId) {
+  const child = getChild(childId);
+  if (!child) return;
+  const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === child.id));
+  const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  const level = groupToLevel[g?g.id:'baga'] || 1;
+  const a = getA(child.id);
+  const checks = CRITERIA_CHECKS[child.id] || {};
+  const cats = CRITERIA[level];
+  const att = ATTENDANCE[child.id] || {};
+  const attStats = { present:0, absent:0, late:0, sick:0 };
+  Object.values(att).forEach(r => { if (attStats[r.status] !== undefined) attStats[r.status]++; });
+  let idx = 0;
+  const criteriaHTML = Object.entries(cats).map(([cat, arr]) => `
+    <h4>${cat}</h4>
+    <ol style="padding-left:20px">
+      ${arr.map(t => { idx++; const c = checks[level+"-"+idx];
+        return `<li style="${c?.checked?'color:#065f46;text-decoration:line-through':''}">${t}${c?.checked?' <strong style="color:#10b981">✓</strong>':''}</li>`;
+      }).join("")}
+    </ol>`).join("");
+  const entryHTML = (arr, title) => arr.length ? `
+    <h3>${title}</h3>
+    ${arr.map(e => `
+      <div style="border-left:3px solid #111827;padding:8px 14px;margin-bottom:10px;background:#f7f8fa">
+        <div style="font-size:12px;color:#666">${e.date||''}${e.title?' · '+e.title:''}</div>
+        ${e.text?`<div style="margin-top:4px;white-space:pre-wrap">${e.text}</div>`:''}
+      </div>`).join("")}` : '';
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${child.name} — Хөгжлийн тайлан</title>
+    <style>
+      body{font-family:"Times New Roman",serif;max-width:900px;margin:20px auto;padding:20px;color:#000;line-height:1.5}
+      h1{text-align:center;font-size:20px;margin-bottom:6px}
+      h2{font-size:16px;margin-top:24px;padding-bottom:6px;border-bottom:2px solid #111827}
+      h3{font-size:14px;margin-top:16px;color:#374151}
+      h4{font-size:13px;margin-top:12px;color:#4b5563}
+      .info{background:#f7f8fa;padding:14px;border-radius:6px;margin-bottom:20px;font-size:13px}
+      .stats{display:flex;gap:14px;margin:10px 0;flex-wrap:wrap}
+      .stat{padding:10px 16px;background:#f7f8fa;border-radius:6px;font-size:13px}
+      @media print { .no-print{display:none} body{margin:0;padding:15px} }
+    </style></head><body>
+    <h1>🎵 ХӨГЖИМ ӨЛЗИЙ — Хүүхдийн хөгжлийн тайлан</h1>
+    <div class="info">
+      <strong>Овог, нэр:</strong> ${child.name}<br>
+      <strong>Бүлэг:</strong> ${g?g.name:''} · ${g?g.age:''}<br>
+      <strong>Түвшин:</strong> ${level}-р түвшин (ХӨГ${level})<br>
+      <strong>Төрсөн он:</strong> ${child.birth_year||'—'}<br>
+      <strong>Тайлан гаргасан:</strong> ${new Date().toLocaleDateString('mn-MN')}
+    </div>
+    <h2>Ирц</h2>
+    <div class="stats">
+      <div class="stat">✓ Ирсэн: <strong>${attStats.present}</strong></div>
+      <div class="stat">✗ Тасалсан: <strong>${attStats.absent}</strong></div>
+      <div class="stat">⏰ Хоцорсон: <strong>${attStats.late}</strong></div>
+      <div class="stat">🤒 Өвчтэй: <strong>${attStats.sick}</strong></div>
+    </div>
+    ${entryHTML(a.start, "🌱 Гарааны үнэлгээ")}
+    ${a.progress.observ.length?entryHTML(a.progress.observ, "👁 Ажиглалт"):''}
+    ${a.progress.talk.length?entryHTML(a.progress.talk, "💬 Ярилцлага"):''}
+    ${a.progress.note.length?entryHTML(a.progress.note, "📝 Тэмдэглэл"):''}
+    ${entryHTML(a.result, "🏆 Үр дүнгийн үнэлгээ")}
+    <h2>✅ Хөгжлийн үнэлгээний шалгуур (${level}-р түвшин)</h2>
+    ${criteriaHTML}
+    <h2>🎵 Хөгжмийн шалгуур (${level}-р түвшин)</h2>
+    ${(() => {
+      const mcats = MUSIC_CRITERIA[level];
+      const mchecks = MUSIC_CHECKS[child.id] || {};
+      return Object.entries(mcats).map(([cat, arr]) => `
+        <h4>${cat}</h4>
+        <table style="width:100%;border-collapse:collapse;margin-bottom:10px;font-size:12px">
+          <thead><tr style="background:#f7f8fa"><th style="padding:6px;border:1px solid #ddd;text-align:left">Үзүүлэлт</th><th style="padding:6px;border:1px solid #ddd;width:80px">Үнэлгээ</th><th style="padding:6px;border:1px solid #ddd">Тайлбар</th></tr></thead>
+          <tbody>${arr.map((t,i) => {
+            const c = mchecks[level+"|"+cat+"|"+(i+1)];
+            const st = c?.status;
+            const label = st==='yes'?'✓ Тийм':st==='partial'?'~ Хэсэгчлэн':st==='no'?'✗ Үгүй':'—';
+            const color = st==='yes'?'#10b981':st==='partial'?'#f59e0b':st==='no'?'#dc2626':'#999';
+            return `<tr><td style="padding:6px;border:1px solid #ddd">${t}</td><td style="padding:6px;border:1px solid #ddd;text-align:center;color:${color};font-weight:600">${label}</td><td style="padding:6px;border:1px solid #ddd;font-style:italic;color:#666">${c?.note||''}</td></tr>`;
+          }).join("")}</tbody>
+        </table>`).join("");
+    })()}
+    <div class="no-print" style="text-align:center;margin-top:30px">
+      <button onclick="window.print()" style="padding:10px 30px;background:#111827;color:white;border:none;border-radius:6px;font-size:14px;cursor:pointer">🖨 Хэвлэх / PDF болгож хадгалах</button>
+    </div>
+    </body></html>`;
+  const w = window.open("", "_blank");
+  w.document.write(html);
+  w.document.close();
+}
+
+async function sendMessage() {
+  const text = document.getElementById("chat-text").value.trim();
+  const file = document.getElementById("chat-file").files[0];
+  if (!text && !file) return;
+  const media = [];
+  if (file) {
+    const src = await uploadFile(file);
+    if (src) media.push({ type: file.type.startsWith("video")?"video":"image", src, label: file.name });
+  }
+  await sb.from('messages').insert({
+    child_id: state.assessChild, from_role: state.role, text, media
+  });
+  await loadAll(); render();
+}
+function renderParentView() {
+  const child = getChild(state.parentChildId);
+  if (!child) return `<div class="empty">Хүүхдийн мэдээлэл олдсонгүй.</div>`;
+  state.assessChild = child.id;
+  const pinned = ANNOUNCEMENTS.filter(a => a.pinned).slice(0,2);
+  const banner = `
+    <div style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;padding:14px 18px;border-radius:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer" onclick="state.view='announcements';render()">
+      <div>
+        <div style="font-weight:600">📢 Зар мэдээ, өдөр тутмын үйл ажиллагаа</div>
+        <div style="font-size:12px;opacity:0.9;margin-top:2px">Цэцэрлэгийн бүх мэдээллийг нэг дор</div>
+        ${pinned.length?pinned.map(a=>`<div style="font-size:12px;opacity:0.9;margin-top:6px">📌 ${escapeHTML(a.title)}</div>`).join(""):''}
+      </div>
+      <button class="btn btn-sm" style="background:white;color:#3b82f6;border:none">Нээх →</button>
+    </div>`;
+  return banner + renderAssessChild(true);
+}
+function openChildModal(id) {
+  const editing = id ? getChild(id) : null;
+  showModal(`
+    <h3>${editing?'Засах':'Шинэ хүүхэд'}</h3>
+    <form onsubmit="return saveChild(event,'${id||''}')">
+      <div class="form-group"><label>Овог, нэр</label>
+        <input class="input" id="c-name" required value="${editing?escapeAttr(editing.name):''}"></div>
+      <div class="form-group"><label>Төрсөн он</label>
+        <input class="input" id="c-year" value="${editing?escapeAttr(editing.birth_year||''):''}"></div>
+      ${editing?`<div class="form-group"><label>Эцэг эхийн код</label>
+        <div style="display:flex;gap:6px">
+          <input class="input" id="c-code" value="${escapeAttr(editing.parent_code)}" style="letter-spacing:2px;font-family:monospace">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeModal();regenChildCode('${editing.id}')" title="Санамсаргүй шинэ код">🔄</button>
+        </div></div>`:''}
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn">Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveChild(e, id) {
+  e.preventDefault();
+  const name = document.getElementById("c-name").value.trim();
+  const birth_year = document.getElementById("c-year").value.trim();
+  if (!name) return false;
+  if (id) {
+    const patch = { name, birth_year };
+    const codeEl = document.getElementById("c-code");
+    if (codeEl && codeEl.value.trim()) patch.parent_code = codeEl.value.trim().toUpperCase();
+    await sb.from('children').update(patch).eq('id', id);
+  } else {
+    const code = Math.random().toString(36).substring(2,8).toUpperCase();
+    await sb.from('children').insert({group_id: state.assessGroup, name, birth_year, parent_code: code});
+  }
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteChild(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('children').delete().eq('id', id);
+  await loadAll(); render();
+}
+function openEntryModal(section, sub) {
+  const today = new Date().toISOString().substring(0,10);
+  showModal(`
+    <h3>Шинэ бичлэг</h3>
+    <form onsubmit="return saveEntry(event,'${section}','${sub}')">
+      <div class="form-group"><label>Огноо</label>
+        <input class="input" id="e-date" type="date" value="${today}"></div>
+      <div class="form-group"><label>Гарчиг</label><input class="input" id="e-title"></div>
+      <div class="form-group"><label>Тайлбар</label>
+        <textarea class="input" id="e-text" style="min-height:80px"></textarea></div>
+      <div class="form-group"><label>Зураг / бичлэг оруулах</label>
+        <input class="input" id="e-file" type="file" accept="image/*,video/*" multiple></div>
+      <div class="form-group"><label>Гадаад холбоос (YouTube, Drive)</label>
+        <input class="input" id="e-url" placeholder="https://..."></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="e-save">Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveEntry(e, section, sub) {
+  e.preventDefault();
+  const btn = document.getElementById("e-save"); btn.disabled = true; btn.textContent = "Хуулж байна...";
+  const date = document.getElementById("e-date").value;
+  const title = document.getElementById("e-title").value.trim();
+  const text = document.getElementById("e-text").value.trim();
+  const url = document.getElementById("e-url").value.trim();
+  const files = document.getElementById("e-file").files;
+  const media = [];
+  for (const f of files) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  if (url) media.push({ type: "link", src: url, label: url });
+  await sb.from('assessments').insert({
+    child_id: state.assessChild, section, subsection: sub||null, date: date||null, title, text, media
+  });
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteEntry(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('assessments').delete().eq('id', id);
+  await loadAll(); render();
+}
+
+// ============ EXPORT / IMPORT ============
+async function exportData() {
+  const [l,p,c,a] = await Promise.all([
+    sb.from('lessons').select('*'), sb.from('plans').select('*'),
+    sb.from('children').select('*'), sb.from('assessments').select('*')
+  ]);
+  const dump = { exportedAt:new Date().toISOString(), lessons:l.data, plans:p.data, children:c.data, assessments:a.data };
+  const blob = new Blob([JSON.stringify(dump,null,2)], {type:"application/json"});
+  const url = URL.createObjectURL(blob);
+  const a2 = document.createElement("a");
+  a2.href = url; a2.download = `хөгжим_өлзий_нөөц_${new Date().toISOString().substring(0,10)}.json`; a2.click();
+  URL.revokeObjectURL(url);
+}
+async function importData(e) {
+  const file = e.target.files[0]; if (!file) return;
+  if (!confirm("Одоогийн бүх мэдээллийг сэлбэх үү? (одоогийн мэдээлэл ХАДГАЛАГДАНА, дээр нэмэгдэнэ)")) return;
+  const r = new FileReader();
+  r.onload = async () => {
+    try {
+      const d = JSON.parse(r.result);
+      if (d.lessons) await sb.from('lessons').insert(d.lessons.map(x=>{delete x.id; return x;}));
+      if (d.plans) await sb.from('plans').insert(d.plans.map(x=>{delete x.id; return x;}));
+      if (d.children) await sb.from('children').insert(d.children.map(x=>{delete x.id; return x;}));
+      if (d.assessments) await sb.from('assessments').insert(d.assessments.map(x=>{delete x.id; return x;}));
+      await loadAll(); alert("Сэргээгдлээ"); render();
+    } catch(err) { alert("Алдаа: "+err.message); }
+  };
+  r.readAsText(file); e.target.value = "";
+}
+
+// ============ UTILS ============
+function showModal(html) {
+  const m = document.createElement("div");
+  m.className = "modal-backdrop";
+  m.innerHTML = `<div class="modal" onclick="event.stopPropagation()">${html}</div>`;
+  m.onclick = closeModal;
+  document.body.appendChild(m);
+}
+function closeModal() { const m = document.querySelector(".modal-backdrop"); if (m) m.remove(); }
+function escapeHTML(s) { return String(s==null?'':s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+function escapeAttr(s) { return escapeHTML(s); }
+</script>
+</body>
+</html>

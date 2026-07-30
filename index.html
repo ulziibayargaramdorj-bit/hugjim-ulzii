@@ -284,11 +284,13 @@ let MESSAGES = {}; // { childId: [rows] }
 let MUSIC_CHECKS = {}; // { childId: { "L-cat-N": {status, note} } }
 let ANNOUNCEMENTS = [];
 let METHODIST_NOTES = [];
+let TASKS = [];
+const TASK_CATEGORIES = ["Заах аргын нэгдлийн үйл ажиллагаа","Хүүхэд хамгаалал","Дотоод хяналт","Ёс зүйн зөвлөл","ХАБ","Архивын үйл ажиллагаа","Өмч хамгаалал","Эд хөрөнгийн тооллого","Цахим хөгжил","Нээлттэй үйл ажиллагаа","Эрдэм шинжилгээний илтгэл судалгаа","Бусад"];
 const AVATAR_EMOJIS = ["👦","👧","🧒","👶","🐻","🐼","🐨","🐯","🦁","🐶","🐱","🐰","🐭","🦊","🐹","🦄","🐸","🐵","🦉","🦋","🌸","🌺","🌻","🌈","⭐","🌟","☀️","🌙","🍎","🍓","🍒","🍭","🎈","🎀","🎵","🎶","🎸","🥁","🎺","🎻"];
 
 // ============ DATA LAYER (Supabase) ============
 async function loadAll() {
-  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes] = await Promise.all([
+  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes] = await Promise.all([
     sb.from('lessons').select('*').order('created_at'),
     sb.from('plans').select('*').order('created_at'),
     sb.from('children').select('*').order('created_at'),
@@ -301,7 +303,8 @@ async function loadAll() {
     sb.from('messages').select('*').order('created_at'),
     sb.from('music_criteria_checks').select('*'),
     sb.from('announcements').select('*').order('pinned', {ascending:false}).order('created_at', {ascending:false}),
-    sb.from('methodist_notes').select('*').order('created_at', {ascending:false})
+    sb.from('methodist_notes').select('*').order('created_at', {ascending:false}),
+    sb.from('tasks').select('*').order('created_at', {ascending:false})
   ]);
   MUSIC_CHECKS = {};
   for (const m of (mccRes.data||[])) {
@@ -310,6 +313,7 @@ async function loadAll() {
   }
   ANNOUNCEMENTS = anRes.data || [];
   METHODIST_NOTES = (mnRes && mnRes.data) || [];
+  TASKS = (tkRes && tkRes.data) || [];
   ATTENDANCE = {};
   for (const a of (atRes.data||[])) {
     if (!ATTENDANCE[a.child_id]) ATTENDANCE[a.child_id] = {};
@@ -427,6 +431,7 @@ function render() {
   else if (state.view === "chat") body = renderChat();
   else if (state.view === "announcements") body = renderAnnouncements();
   else if (state.view === "methodist") body = renderMethodist();
+  else if (state.view === "tasks") body = renderTasks();
   else if (state.view === "summary") body = renderSummary();
   else if (state.view === "assessGroups") body = renderAssessGroups();
   else if (state.view === "assessChildren") body = renderAssessChildren();
@@ -536,9 +541,9 @@ function renderHome() {
       <div class="card c2" onclick="state.view='planGroups';render()">
         <span class="element-icon">📋</span><h3>Хөтөлбөр төлөвлөгөө</h3>
         <p>📆 Жилийн, сарын, ээлжит төлөвлөгөө</p></div>
-      <div class="card c3" onclick="state.view='yearlyPlans';render()">
-        <span class="element-icon">📅</span><h3>Жилийн төлөвлөлт</h3>
-        <p>🗂 4 түвшний бүрэн матриц</p></div>
+      <div class="card c3" onclick="state.view='tasks';render()">
+        <span class="element-icon">📌</span><h3>Үүрэг даалгаврын биелэлт</h3>
+        <p>🗂 Ажлын хэсэг, гүйцэтгэлийн тайлан</p></div>
       <div class="card c4" onclick="state.view='assessGroups';render()">
         <span class="element-icon">📊</span><h3>Хүүхдийн хөгжлийн үнэлгээ</h3>
         <p>🌱📈🏆 Гараа, явц, үр дүн, шалгуур</p></div>
@@ -1450,6 +1455,216 @@ async function toggleCriterion(childId, level, num) {
   }
   await loadAll(); render();
 }
+// ============ TASKS (ҮҮРЭГ ДААЛГАВРЫН БИЕЛЭЛТ) ============
+function renderTasks() {
+  const isTeacher = state.role === 'teacher';
+  const isMethodist = state.role === 'methodist';
+  const filter = state.taskFilter || 'all';
+  const catFilter = state.taskCat || 'all';
+  const items = TASKS.filter(t => {
+    if (filter === 'pending' && (t.approved_at || t.completion_pct === 100)) return false;
+    if (filter === 'inprogress' && (t.completion_pct === 0 || t.completion_pct === 100)) return false;
+    if (filter === 'done' && t.completion_pct !== 100) return false;
+    if (filter === 'approved' && !t.approved_at) return false;
+    if (catFilter !== 'all' && t.category !== catFilter) return false;
+    return true;
+  });
+  const stats = {
+    total: TASKS.length,
+    pending: TASKS.filter(t => t.completion_pct === 0).length,
+    inprogress: TASKS.filter(t => t.completion_pct > 0 && t.completion_pct < 100).length,
+    done: TASKS.filter(t => t.completion_pct === 100).length,
+    approved: TASKS.filter(t => t.approved_at).length
+  };
+  const back = isMethodist ? "state.view='methodistHome';render()" : "goHome()";
+  return `
+    <div class="breadcrumb"><a onclick="${back}">Нүүр</a><span class="sep">›</span><span>Үүрэг даалгавар</span></div>
+    <div class="toolbar">
+      <div><h2 class="section">📌 Үүрэг даалгаврын биелэлт</h2>
+        <p class="section-desc" style="margin:0">${stats.total} үүрэг · ${stats.done} биелсэн · ${stats.approved} батласан</p></div>
+      ${(isTeacher||isMethodist)?`<button class="btn" onclick="openTaskModal()">➕ Үйл ажиллагаа нэмэх</button>`:''}
+    </div>
+    <div style="background:white;padding:14px;border-radius:12px;margin-bottom:16px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <button class="btn btn-sm ${filter==='all'?'':'btn-secondary'}" onclick="state.taskFilter='all';render()">📋 Бүгд (${stats.total})</button>
+        <button class="btn btn-sm ${filter==='pending'?'':'btn-secondary'}" onclick="state.taskFilter='pending';render()">⏳ Эхлээгүй (${stats.pending})</button>
+        <button class="btn btn-sm ${filter==='inprogress'?'':'btn-secondary'}" onclick="state.taskFilter='inprogress';render()">🔄 Явцтай (${stats.inprogress})</button>
+        <button class="btn btn-sm ${filter==='done'?'':'btn-secondary'}" onclick="state.taskFilter='done';render()">✅ Биелсэн (${stats.done})</button>
+        <button class="btn btn-sm ${filter==='approved'?'':'btn-secondary'}" onclick="state.taskFilter='approved';render()">📌 Батласан (${stats.approved})</button>
+      </div>
+      <select class="input" style="width:auto" onchange="state.taskCat=this.value;render()">
+        <option value="all">Бүх ангилал</option>
+        ${TASK_CATEGORIES.map(c=>`<option value="${escapeAttr(c)}" ${catFilter===c?'selected':''}>${c}</option>`).join("")}
+      </select>
+    </div>
+    ${items.length===0?`<div class="empty">Үүрэг байхгүй</div>`:
+    `<div class="lesson-list">${items.map(t=>renderTaskCard(t, isTeacher, isMethodist)).join("")}</div>`}`;
+}
+function renderTaskCard(t, isTeacher, isMethodist) {
+  const pct = t.completion_pct || 0;
+  const color = pct===100?'#10b981':pct>=50?'#3b82f6':pct>0?'#f59e0b':'#94a3b8';
+  return `
+    <div class="lesson-item">
+      <div class="info">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+          ${t.category?`<span style="background:#e0e7ff;color:#3730a3;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600">${escapeHTML(t.category)}</span>`:''}
+          ${t.approved_at?`<span style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600">✅ БАТЛАСАН</span>`:''}
+          ${t.due_date?`<span style="font-size:12px;color:var(--muted)">📅 ${t.due_date}</span>`:''}
+        </div>
+        <h4>${escapeHTML(t.title)}</h4>
+        ${t.description?`<div style="margin-top:6px;white-space:pre-wrap;color:var(--muted);font-size:13px">${escapeHTML(t.description)}</div>`:''}
+        ${t.work_groups && t.work_groups.length?`
+          <div style="margin-top:8px"><strong style="font-size:12px">👥 Ажлын хэсэг:</strong>
+          <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+            ${t.work_groups.map(w=>`<span style="background:#fef3c7;color:#92400e;padding:3px 8px;border-radius:4px;font-size:11px">${escapeHTML(w)}</span>`).join("")}
+          </div></div>`:''}
+        <div style="margin-top:10px">
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px">
+            <span>Гүйцэтгэл</span><span style="color:${color};font-weight:600">${pct}%</span>
+          </div>
+          <div style="height:10px;background:var(--bg);border-radius:5px;overflow:hidden">
+            <div style="width:${pct}%;height:100%;background:${color};transition:width 0.3s"></div>
+          </div>
+        </div>
+        ${t.media && t.media.length?`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:12px">${t.media.map(m=>renderMediaItem(m)).join("")}</div>`:''}
+        ${t.files && t.files.length?`<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+          ${t.files.map(f=>`<a href="${escapeAttr(f.src)}" target="_blank" style="padding:8px 12px;background:var(--bg);border-radius:8px;text-decoration:none;color:var(--accent);font-size:13px">📎 ${escapeHTML(f.label||f.src)}</a>`).join("")}
+        </div>`:''}
+        ${t.approved_at?`
+          <div style="margin-top:10px;padding:10px 14px;background:#d1fae5;border-left:4px solid #10b981;border-radius:6px;font-size:13px">
+            <strong>✅ Батласан:</strong> ${escapeHTML(t.approved_by||'')} · ${new Date(t.approved_at).toLocaleDateString('mn-MN')}
+            ${t.approval_note?`<br><strong>📝 Тайлбар:</strong> ${escapeHTML(t.approval_note)}`:''}
+          </div>`:''}
+      </div>
+      <div class="actions">
+        ${(isTeacher||isMethodist)?`
+          <button class="btn btn-secondary btn-sm" onclick="openTaskProgress('${t.id}')">📊 Гүйцэтгэл</button>
+          <button class="btn btn-secondary btn-sm" onclick="openTaskModal('${t.id}')">Засах</button>
+        `:''}
+        ${isMethodist?(t.approved_at?
+          `<button class="btn btn-danger btn-sm" onclick="unapproveTask('${t.id}')">🚫 Батлахаа болих</button>`:
+          `<button class="btn btn-sm" style="background:linear-gradient(135deg,#10b981,#059669)" onclick="openTaskApproval('${t.id}')">✅ Батлах</button>`
+        ):''}
+        ${isTeacher?`<button class="btn btn-danger btn-sm" onclick="deleteTask('${t.id}')">Устгах</button>`:''}
+      </div>
+    </div>`;
+}
+function openTaskModal(id) {
+  const t = id ? TASKS.find(x=>x.id===id) : null;
+  const wgs = t?.work_groups || [];
+  showModal(`
+    <h3>${t?"✏️ Засах":"➕ Шинэ үйл ажиллагаа"}</h3>
+    <form onsubmit="return saveTask(event,'${id||''}')">
+      <div class="form-group"><label>📝 Гарчиг</label>
+        <input class="input" id="t-title" required value="${t?escapeAttr(t.title):''}"></div>
+      <div class="form-group"><label>🏷 Ангилал</label>
+        <select class="input" id="t-cat">
+          <option value="">— сонгох —</option>
+          ${TASK_CATEGORIES.map(c=>`<option value="${escapeAttr(c)}" ${t&&t.category===c?'selected':''}>${c}</option>`).join("")}
+        </select></div>
+      <div class="form-group"><label>📅 Хугацаа</label>
+        <input class="input" id="t-date" type="date" value="${t?(t.due_date||''):''}"></div>
+      <div class="form-group"><label>👥 Ажлын хэсэг (3-5 нэр, мөр тус бүрд нэг)</label>
+        <textarea class="input" id="t-groups" placeholder="Ж.Батсуурь&#10;Б.Оюунтуяа&#10;Д.Мөнгөнцэцэг" style="min-height:80px">${wgs.join("\n")}</textarea></div>
+      <div class="form-group"><label>📄 Тайлбар / Тэмдэглэл</label>
+        <textarea class="input" id="t-desc" style="min-height:80px">${t?escapeHTML(t.description||''):''}</textarea></div>
+      <div class="form-group"><label>📊 Гүйцэтгэл (%)</label>
+        <input class="input" id="t-pct" type="number" min="0" max="100" value="${t?t.completion_pct:0}"></div>
+      <div class="form-group"><label>🖼 Зураг / бичлэг</label>
+        <input class="input" id="t-media" type="file" accept="image/*,video/*" multiple></div>
+      <div class="form-group"><label>📎 Файл хавсрах</label>
+        <input class="input" id="t-files" type="file" multiple></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="t-save">💾 Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveTask(e, id) {
+  e.preventDefault();
+  const btn = document.getElementById("t-save"); btn.disabled=true; btn.textContent="⏳ Хадгалж байна...";
+  const existing = id ? TASKS.find(x=>x.id===id) : null;
+  const media = existing ? [...(existing.media||[])] : [];
+  const files = existing ? [...(existing.files||[])] : [];
+  for (const f of document.getElementById("t-media").files) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  for (const f of document.getElementById("t-files").files) {
+    const src = await uploadFile(f);
+    if (src) files.push({ src, label: f.name });
+  }
+  const work_groups = document.getElementById("t-groups").value.split("\n").map(s=>s.trim()).filter(Boolean);
+  const data = {
+    title: document.getElementById("t-title").value.trim(),
+    category: document.getElementById("t-cat").value || null,
+    due_date: document.getElementById("t-date").value || null,
+    description: document.getElementById("t-desc").value.trim(),
+    completion_pct: parseInt(document.getElementById("t-pct").value)||0,
+    work_groups, media, files
+  };
+  if (id) await sb.from('tasks').update(data).eq('id', id);
+  else await sb.from('tasks').insert(data);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+function openTaskProgress(id) {
+  const t = TASKS.find(x=>x.id===id);
+  showModal(`
+    <h3>📊 Гүйцэтгэл шинэчлэх</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px">${escapeHTML(t.title)}</p>
+    <div class="form-group"><label>Гүйцэтгэлийн хувь</label>
+      <input type="range" id="tp-pct" min="0" max="100" step="5" value="${t.completion_pct||0}" oninput="document.getElementById('tp-val').textContent=this.value+'%'" style="width:100%">
+      <div style="text-align:center;font-size:24px;font-weight:700;color:var(--accent);margin-top:6px" id="tp-val">${t.completion_pct||0}%</div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Болих</button>
+      <button class="btn" onclick="saveTaskProgress('${id}')">💾 Хадгалах</button>
+    </div>`);
+}
+async function saveTaskProgress(id) {
+  const pct = parseInt(document.getElementById("tp-pct").value);
+  await sb.from('tasks').update({completion_pct: pct}).eq('id', id);
+  await loadAll(); closeModal(); render();
+}
+function openTaskApproval(id) {
+  showModal(`
+    <h3>✅ Үйл ажиллагааг батлах</h3>
+    <div class="form-group"><label>Батлах арга зүйч</label>
+      <input class="input" id="tap-name" value="${escapeAttr(state.methodistName||'')}"></div>
+    <div class="form-group"><label>Гүйцэтгэлийн хувь</label>
+      <input class="input" id="tap-pct" type="number" min="0" max="100" value="${TASKS.find(x=>x.id===id)?.completion_pct||100}"></div>
+    <div class="form-group"><label>Тайлбар / Санал</label>
+      <textarea class="input" id="tap-note"></textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Болих</button>
+      <button class="btn" style="background:linear-gradient(135deg,#10b981,#059669)" onclick="approveTask('${id}')">✅ Батлах</button>
+    </div>`);
+}
+async function approveTask(id) {
+  const name = document.getElementById("tap-name").value.trim();
+  const pct = parseInt(document.getElementById("tap-pct").value)||100;
+  const note = document.getElementById("tap-note").value.trim();
+  if (!name) { alert("Нэрээ бичнэ үү"); return; }
+  await sb.from('tasks').update({
+    approved_at: new Date().toISOString(),
+    approved_by: name,
+    approval_note: note || null,
+    completion_pct: pct
+  }).eq('id', id);
+  await loadAll(); closeModal(); render();
+}
+async function unapproveTask(id) {
+  if (!confirm("Батлахаа болих уу?")) return;
+  await sb.from('tasks').update({approved_at:null, approved_by:null, approval_note:null}).eq('id', id);
+  await loadAll(); render();
+}
+async function deleteTask(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('tasks').delete().eq('id', id);
+  await loadAll(); render();
+}
+
 // ============ METHODIST DASHBOARD ============
 function renderMethodistHome() {
   const allPlans = [];
@@ -1489,6 +1704,9 @@ function renderMethodistHome() {
       <div class="card c5" onclick="state.view='methodist';render()">
         <span class="element-icon">👔</span><h3>Зөвлөгөө, заавар</h3>
         <p>Багшид зориулсан бичлэгүүд</p></div>
+      <div class="card c3" onclick="state.view='tasks';render()">
+        <span class="element-icon">📌</span><h3>Үүрэг даалгавар</h3>
+        <p>Ажлын хэсэг, гүйцэтгэл шалгах</p></div>
       <div class="card c9" onclick="state.view='announcements';render()">
         <span class="element-icon">📢</span><h3>Зар мэдээ үзэх</h3>
         <p>Цэцэрлэгийн зар мэдээллүүд</p></div>

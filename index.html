@@ -289,13 +289,15 @@ let DIARY = [];
 let ACHIEVEMENTS = {}; // { childId: [rows] }
 let CAL_EVENTS = [];
 let SONG_LIB = [];
+let HOMEWORK = {}; // { childId: [rows] }
+let FEEDBACK = {}; // { childId: [rows] }
 const MOOD_EMOJIS = ["😊 Гоё өдөр","😍 Маш сайхан","🙂 Хэвийн","😐 Тайван","😔 Ядруу","😤 Хэцүү","🎉 Баярт өдөр","💪 Идэвхтэй","🌈 Урам зоригтой"];
 const TASK_CATEGORIES = ["Заах аргын нэгдлийн үйл ажиллагаа","Хүүхэд хамгаалал","Дотоод хяналт","Ёс зүйн зөвлөл","ХАБ","Архивын үйл ажиллагаа","Өмч хамгаалал","Эд хөрөнгийн тооллого","Цахим хөгжил","Нээлттэй үйл ажиллагаа","Эрдэм шинжилгээний илтгэл судалгаа","Бусад"];
 const AVATAR_EMOJIS = ["👦","👧","🧒","👶","🐻","🐼","🐨","🐯","🦁","🐶","🐱","🐰","🐭","🦊","🐹","🦄","🐸","🐵","🦉","🦋","🌸","🌺","🌻","🌈","⭐","🌟","☀️","🌙","🍎","🍓","🍒","🍭","🎈","🎀","🎵","🎶","🎸","🥁","🎺","🎻"];
 
 // ============ DATA LAYER (Supabase) ============
 async function loadAll() {
-  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes, drRes, achRes, ceRes, slRes] = await Promise.all([
+  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes, drRes, achRes, ceRes, slRes, hwRes, pfRes] = await Promise.all([
     sb.from('lessons').select('*').order('created_at'),
     sb.from('plans').select('*').order('created_at'),
     sb.from('children').select('*').order('created_at'),
@@ -313,7 +315,9 @@ async function loadAll() {
     sb.from('diary').select('*').order('entry_date', {ascending:false}),
     sb.from('achievements').select('*').order('earned_at', {ascending:false}),
     sb.from('calendar_events').select('*').order('event_date'),
-    sb.from('song_library').select('*').order('kind').order('level').order('title')
+    sb.from('song_library').select('*').order('kind').order('level').order('title'),
+    sb.from('homework').select('*').order('created_at', {ascending:false}),
+    sb.from('parent_feedback').select('*').order('created_at', {ascending:false})
   ]);
   MUSIC_CHECKS = {};
   for (const m of (mccRes.data||[])) {
@@ -331,6 +335,16 @@ async function loadAll() {
   }
   CAL_EVENTS = (ceRes && ceRes.data) || [];
   SONG_LIB = (slRes && slRes.data) || [];
+  HOMEWORK = {};
+  for (const h of ((hwRes && hwRes.data)||[])) {
+    if (!HOMEWORK[h.child_id]) HOMEWORK[h.child_id] = [];
+    HOMEWORK[h.child_id].push(h);
+  }
+  FEEDBACK = {};
+  for (const f of ((pfRes && pfRes.data)||[])) {
+    if (!FEEDBACK[f.child_id]) FEEDBACK[f.child_id] = [];
+    FEEDBACK[f.child_id].push(f);
+  }
   ATTENDANCE = {};
   for (const a of (atRes.data||[])) {
     if (!ATTENDANCE[a.child_id]) ATTENDANCE[a.child_id] = {};
@@ -1186,6 +1200,8 @@ function renderAssessChild(readonly) {
     { id:"criteria", name:"✅ Шалгуур" },
     { id:"music", name:"🎵 Хөгжим шалгуур" },
     { id:"achievements", name:"🌟 Ололт, авьяас" },
+    { id:"homework", name:"📥 Гэрийн даалгавар" },
+    { id:"feedback", name:"⭐ Санал хүсэлт" },
     { id:"graph", name:"📊 График" },
     { id:"chat", name:"💬 Зурвас" }
   ];
@@ -1195,6 +1211,8 @@ function renderAssessChild(readonly) {
   else if (tab === "criteria") content = renderCriteria(child, readonly);
   else if (tab === "music") content = renderMusicCriteria(child, readonly);
   else if (tab === "achievements") content = renderAchievements(child, readonly);
+  else if (tab === "homework") content = renderHomework(child, readonly);
+  else if (tab === "feedback") content = renderFeedback(child, readonly);
   else if (tab === "graph") content = renderChildGraph(child);
   else if (tab === "chat") content = renderChat(readonly);
   else if (tab === "progress") {
@@ -1409,6 +1427,233 @@ async function saveAchievement(e, childId) {
 async function deleteAchievement(id) {
   if (!confirm("Устгах уу?")) return;
   await sb.from('achievements').delete().eq('id', id);
+  await loadAll(); render();
+}
+
+// ============ HOMEWORK (ГЭРИЙН ДААЛГАВАР) ============
+function renderHomework(child, readonly) {
+  const items = HOMEWORK[child.id] || [];
+  const isTeacher = state.role === 'teacher';
+  const isParent = state.role === 'parent';
+  const addBtn = isTeacher ? `<div style="margin-bottom:14px"><button class="btn" onclick="openHomeworkModal('${child.id}')">➕ Даалгавар илгээх</button></div>` : "";
+  const list = items.length===0 ? `<div class="empty">Даалгавар байхгүй байна</div>` :
+    `<div class="lesson-list">${items.map(h=>{
+      const done = h.status === 'completed';
+      return `
+      <div class="lesson-item">
+        <div class="info">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+            ${done?'<span style="background:#d1fae5;color:#065f46;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600">✅ Хийсэн</span>':'<span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;font-size:11px;font-weight:600">⏳ Хийгээгүй</span>'}
+            ${h.due_date?`<span style="font-size:12px;color:var(--muted)">📅 ${h.due_date}</span>`:''}
+          </div>
+          <h4>${escapeHTML(h.title)}</h4>
+          ${h.description?`<div style="margin-top:6px;white-space:pre-wrap">${escapeHTML(h.description)}</div>`:''}
+          ${h.media && h.media.length?`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">${h.media.map(m=>renderMediaItem(m)).join("")}</div>`:''}
+          ${h.files && h.files.length?`<div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
+            ${h.files.map(f=>`<a href="${escapeAttr(f.src)}" target="_blank" style="padding:6px 10px;background:var(--bg);border-radius:6px;text-decoration:none;color:var(--accent);font-size:12px">📎 ${escapeHTML(f.label||f.src)}</a>`).join("")}</div>`:''}
+          ${h.parent_note?`
+            <div style="margin-top:10px;padding:10px 14px;background:#eff6ff;border-left:4px solid #3b82f6;border-radius:6px">
+              <div style="font-size:11px;color:#1e40af;font-weight:600;margin-bottom:4px">👨‍👩‍👧 Эцэг эхийн тайлбар:</div>
+              <div style="white-space:pre-wrap;font-size:13px">${escapeHTML(h.parent_note)}</div>
+              ${h.parent_media && h.parent_media.length?`<div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px">${h.parent_media.map(m=>renderMediaItem(m)).join("")}</div>`:''}
+            </div>`:''}
+        </div>
+        <div class="actions">
+          ${isParent?(done?
+            `<button class="btn btn-secondary btn-sm" onclick="markHomework('${h.id}','pending')">↩ Буцаах</button>
+             <button class="btn btn-secondary btn-sm" onclick="openParentReport('${h.id}')">📝 Тайлбар</button>`:
+            `<button class="btn btn-sm" onclick="markHomework('${h.id}','completed')" style="background:linear-gradient(135deg,#10b981,#059669)">✅ Хийлээ</button>
+             <button class="btn btn-secondary btn-sm" onclick="openParentReport('${h.id}')">📝 Тайлбар</button>`
+          ):''}
+          ${isTeacher?`<button class="btn btn-danger btn-sm" onclick="deleteHomework('${h.id}')">Устгах</button>`:''}
+        </div>
+      </div>`;
+    }).join("")}</div>`;
+  return `${addBtn}${list}`;
+}
+function openHomeworkModal(childId) {
+  const today = new Date().toISOString().substring(0,10);
+  showModal(`
+    <h3>📥 Гэрийн даалгавар илгээх</h3>
+    <form onsubmit="return saveHomework(event,'${childId}')">
+      <div class="form-group"><label>Гарчиг</label>
+        <input class="input" id="h-title" required placeholder="Ж: 'Туулай' дууг сурч ирэх"></div>
+      <div class="form-group"><label>Дэлгэрэнгүй тайлбар</label>
+        <textarea class="input" id="h-desc" style="min-height:100px" placeholder="Дууг сонсоод үгийг цээжлэх, аяыг дуурайж дуулах г.м"></textarea></div>
+      <div class="form-group"><label>Гүйцэтгэх хугацаа</label>
+        <input class="input" id="h-date" type="date" value="${today}"></div>
+      <div class="form-group"><label>Зураг / бичлэг (жишээ)</label>
+        <input class="input" id="h-media" type="file" accept="image/*,video/*" multiple></div>
+      <div class="form-group"><label>Файл (шүлэг, дууны үг г.м)</label>
+        <input class="input" id="h-files" type="file" multiple></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="h-save">📨 Илгээх</button>
+      </div>
+    </form>`);
+}
+async function saveHomework(e, childId) {
+  e.preventDefault();
+  const btn = document.getElementById("h-save"); btn.disabled=true; btn.textContent="⏳...";
+  const media = [], files = [];
+  for (const f of document.getElementById("h-media").files) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  for (const f of document.getElementById("h-files").files) {
+    const src = await uploadFile(f);
+    if (src) files.push({ src, label: f.name });
+  }
+  const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === childId));
+  await sb.from('homework').insert({
+    child_id: childId,
+    group_id: g?g.id:null,
+    title: document.getElementById("h-title").value.trim(),
+    description: document.getElementById("h-desc").value.trim(),
+    due_date: document.getElementById("h-date").value || null,
+    media, files
+  });
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function markHomework(id, status) {
+  await sb.from('homework').update({
+    status,
+    completed_at: status === 'completed' ? new Date().toISOString() : null
+  }).eq('id', id);
+  await loadAll(); render();
+}
+function openParentReport(homeworkId) {
+  const h = HOMEWORK[state.parentChildId||state.assessChild]?.find(x=>x.id===homeworkId);
+  showModal(`
+    <h3>📝 Тайлбар нэмэх</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px">${escapeHTML(h?.title||'')}</p>
+    <div class="form-group"><label>Хэрхэн хийсэн, ямар үр дүнтэй байсан талаар</label>
+      <textarea class="input" id="pr-note" style="min-height:100px">${escapeHTML(h?.parent_note||'')}</textarea></div>
+    <div class="form-group"><label>Зураг / бичлэг оруулах</label>
+      <input class="input" id="pr-media" type="file" accept="image/*,video/*" multiple></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Болих</button>
+      <button class="btn" onclick="saveParentReport('${homeworkId}')" id="pr-save">💾 Хадгалах</button>
+    </div>`);
+}
+async function saveParentReport(id) {
+  const btn = document.getElementById("pr-save"); btn.disabled=true; btn.textContent="⏳...";
+  const h = HOMEWORK[state.parentChildId||state.assessChild]?.find(x=>x.id===id);
+  const parent_media = h ? [...(h.parent_media||[])] : [];
+  for (const f of document.getElementById("pr-media").files) {
+    const src = await uploadFile(f);
+    if (src) parent_media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  await sb.from('homework').update({
+    parent_note: document.getElementById("pr-note").value.trim(),
+    parent_media
+  }).eq('id', id);
+  await loadAll(); closeModal(); render();
+}
+async function deleteHomework(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('homework').delete().eq('id', id);
+  await loadAll(); render();
+}
+
+// ============ PARENT FEEDBACK (САНАЛ ХҮСЭЛТ) ============
+function renderFeedback(child, readonly) {
+  const items = FEEDBACK[child.id] || [];
+  const isTeacher = state.role === 'teacher';
+  const isParent = state.role === 'parent';
+  const addBtn = isParent ? `<div style="margin-bottom:14px"><button class="btn" onclick="openFeedbackModal('${child.id}')">➕ Санал/хүсэлт бичих</button></div>` :
+    `<div style="background:#eff6ff;padding:12px;border-radius:10px;margin-bottom:14px;font-size:13px;color:#1e40af">💡 Эцэг эх нар өөрсдийн санал хүсэлтээ энд бичнэ. Багш хариу өгч болно.</div>`;
+  const list = items.length===0 ? `<div class="empty">Санал хүсэлт байхгүй</div>` :
+    `<div class="lesson-list">${items.map(f=>{
+      const kind = { suggestion:'💡 Санал', complaint:'😟 Гомдол', praise:'😊 Талархал', question:'❓ Асуулт' }[f.kind]||'💡 Санал';
+      return `
+      <div class="lesson-item">
+        <div class="info">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+            <span style="background:#fef3c7;color:#92400e;padding:3px 10px;border-radius:6px;font-size:12px;font-weight:600">${kind}</span>
+            <span style="font-size:12px;color:var(--muted)">${new Date(f.created_at).toLocaleString('mn-MN')}</span>
+          </div>
+          <div style="white-space:pre-wrap;font-size:14px">${escapeHTML(f.text)}</div>
+          ${f.media && f.media.length?`<div style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px">${f.media.map(m=>renderMediaItem(m)).join("")}</div>`:''}
+          ${f.teacher_reply?`
+            <div style="margin-top:10px;padding:10px 14px;background:#f0fdf4;border-left:4px solid #10b981;border-radius:6px">
+              <div style="font-size:11px;color:#065f46;font-weight:600;margin-bottom:4px">👩‍🏫 Багшийн хариу · ${new Date(f.replied_at).toLocaleDateString('mn-MN')}</div>
+              <div style="white-space:pre-wrap;font-size:13px">${escapeHTML(f.teacher_reply)}</div>
+            </div>`:''}
+        </div>
+        <div class="actions">
+          ${isTeacher?`
+            <button class="btn btn-sm" onclick="openReplyModal('${f.id}')" style="background:linear-gradient(135deg,#10b981,#059669)">${f.teacher_reply?'✏️ Хариу засах':'💬 Хариу өгөх'}</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteFeedback('${f.id}')">Устгах</button>`:''}
+          ${isParent && !f.teacher_reply?`<button class="btn btn-danger btn-sm" onclick="deleteFeedback('${f.id}')">Устгах</button>`:''}
+        </div>
+      </div>`;
+    }).join("")}</div>`;
+  return `${addBtn}${list}`;
+}
+function openFeedbackModal(childId) {
+  showModal(`
+    <h3>⭐ Санал хүсэлт бичих</h3>
+    <form onsubmit="return saveFeedback(event,'${childId}')">
+      <div class="form-group"><label>Төрөл</label>
+        <select class="input" id="fb-kind">
+          <option value="suggestion">💡 Санал</option>
+          <option value="praise">😊 Талархал</option>
+          <option value="question">❓ Асуулт</option>
+          <option value="complaint">😟 Гомдол</option>
+        </select></div>
+      <div class="form-group"><label>Дэлгэрэнгүй</label>
+        <textarea class="input" id="fb-text" required style="min-height:120px" placeholder="Хүүхдийнхээ хөгжлийн талаар, багшид зориулсан санал..."></textarea></div>
+      <div class="form-group"><label>Зураг / бичлэг</label>
+        <input class="input" id="fb-media" type="file" accept="image/*,video/*" multiple></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="fb-save">📨 Илгээх</button>
+      </div>
+    </form>`);
+}
+async function saveFeedback(e, childId) {
+  e.preventDefault();
+  const btn = document.getElementById("fb-save"); btn.disabled=true; btn.textContent="⏳...";
+  const media = [];
+  for (const f of document.getElementById("fb-media").files) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  await sb.from('parent_feedback').insert({
+    child_id: childId,
+    kind: document.getElementById("fb-kind").value,
+    text: document.getElementById("fb-text").value.trim(),
+    media
+  });
+  await loadAll(); closeModal(); render();
+  return false;
+}
+function openReplyModal(id) {
+  const f = Object.values(FEEDBACK).flat().find(x=>x.id===id);
+  showModal(`
+    <h3>💬 Багшийн хариу</h3>
+    <div style="background:var(--bg);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:13px">
+      <strong>Эцэг эхийн санал:</strong><br>${escapeHTML(f?.text||'')}
+    </div>
+    <div class="form-group"><label>Хариу</label>
+      <textarea class="input" id="rp-text" style="min-height:100px">${escapeHTML(f?.teacher_reply||'')}</textarea></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Болих</button>
+      <button class="btn" onclick="saveReply('${id}')">📨 Илгээх</button>
+    </div>`);
+}
+async function saveReply(id) {
+  await sb.from('parent_feedback').update({
+    teacher_reply: document.getElementById("rp-text").value.trim(),
+    replied_at: new Date().toISOString()
+  }).eq('id', id);
+  await loadAll(); closeModal(); render();
+}
+async function deleteFeedback(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('parent_feedback').delete().eq('id', id);
   await loadAll(); render();
 }
 

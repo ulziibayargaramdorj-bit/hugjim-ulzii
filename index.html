@@ -1336,7 +1336,7 @@ function renderAssessChild(readonly) {
   ];
   let content = "";
   if (tab === "start") content = renderEntryList(a.start, "start", null, readonly);
-  else if (tab === "result") content = renderEntryList(a.result, "result", null, readonly);
+  else if (tab === "result") content = renderResultSummary(child, readonly) + renderEntryList(a.result, "result", null, readonly);
   else if (tab === "criteria") content = renderCriteria(child, readonly);
   else if (tab === "music") content = renderMusicCriteria(child, readonly);
   else if (tab === "achievements") content = renderAchievements(child, readonly);
@@ -1378,6 +1378,92 @@ function renderAssessChild(readonly) {
       ${tabs.map(t => `<button class="btn ${tab===t.id?'':'btn-secondary'} btn-sm" onclick="state.assessTab='${t.id}';render()">${t.name}</button>`).join("")}
     </div>
     ${content}`;
+}
+function renderResultSummary(child, readonly) {
+  const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === child.id));
+  const level = groupToLevel[g?g.id:'baga'] || 1;
+  // General
+  const cats = CRITERIA[level];
+  const info = [];
+  let n = 0;
+  Object.entries(cats).forEach(([cat, arr]) => arr.forEach(t => { n++; info.push({num:n, cat, text:t}); }));
+  const gChecks = CRITERIA_CHECKS[child.id] || {};
+  const gDone = info.filter(x => gChecks[level+"-"+x.num]?.checked);
+  const gNotDone = info.filter(x => !gChecks[level+"-"+x.num]?.checked);
+  const gPct = n ? Math.round(gDone.length/n*100) : 0;
+  // Music
+  const mcats = MUSIC_CRITERIA[level];
+  const minfo = [];
+  Object.entries(mcats).forEach(([cat, arr]) => arr.forEach((t, i) => minfo.push({cat, sub:i+1, text:t})));
+  const mChecks = MUSIC_CHECKS[child.id] || {};
+  const mYes = minfo.filter(x => mChecks[level+"|"+x.cat+"|"+x.sub]?.status==='yes');
+  const mPartial = minfo.filter(x => mChecks[level+"|"+x.cat+"|"+x.sub]?.status==='partial');
+  const mNo = minfo.filter(x => mChecks[level+"|"+x.cat+"|"+x.sub]?.status==='no');
+  const mScore = mYes.length + mPartial.length*0.5;
+  const mPct = minfo.length ? Math.round(mScore/minfo.length*100) : 0;
+  const gColor = gPct>=80?'#10b981':gPct>=50?'#3b82f6':gPct>=25?'#f59e0b':'#dc2626';
+  const mColor = mPct>=80?'#10b981':mPct>=50?'#3b82f6':mPct>=25?'#f59e0b':'#dc2626';
+
+  return `
+    <div style="background:linear-gradient(135deg,#fef3c7,#fed7aa,#fce7f3);border-radius:16px;padding:20px;margin-bottom:20px;box-shadow:0 4px 14px rgba(236,72,153,0.1)">
+      <h3 style="font-size:16px;font-weight:700;margin-bottom:14px;color:#7c2d12">🏆 Хичээлийн жилийн үр дүнгийн автомат нэгтгэл</h3>
+      <p style="font-size:12px;color:#78350f;margin-bottom:14px">Шалгуур болон Хөгжмийн шалгуурын tab-аас автоматаар татагдсан явц</p>
+
+      <!-- Ерөнхий -->
+      <div style="background:white;border-radius:12px;padding:16px;margin-bottom:12px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px">
+          <strong>📊 Ерөнхий шалгуур (${level}-р түвшин)</strong>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="color:${gColor};font-size:22px;font-weight:800">${gPct}%</span>
+            <span style="font-size:12px;color:var(--muted)">${gDone.length}/${n}</span>
+          </div>
+        </div>
+        <div style="height:10px;background:var(--bg);border-radius:5px;overflow:hidden;margin-bottom:10px">
+          <div style="width:${gPct}%;height:100%;background:${gColor}"></div>
+        </div>
+        <details ${gDone.length<=6?'open':''}>
+          <summary style="cursor:pointer;padding:6px 10px;background:#f0fdf4;color:#065f46;font-weight:600;font-size:13px;border-radius:6px;margin-bottom:4px">✅ Эзэмшсэн шалгуур (${gDone.length})</summary>
+          ${gDone.length?`<ol style="margin:8px 0 0;padding-left:26px;font-size:13px;color:#065f46;line-height:1.7">
+            ${gDone.map(x=>`<li><span style="color:#6b7280;font-size:11px">[${escapeHTML(x.cat)}]</span> ${escapeHTML(x.text)}</li>`).join("")}
+          </ol>`:'<div style="padding:8px;font-size:12px;color:var(--muted)">Одоохондоо байхгүй</div>'}
+        </details>
+        <details style="margin-top:6px">
+          <summary style="cursor:pointer;padding:6px 10px;background:#fef2f2;color:#991b1b;font-weight:600;font-size:13px;border-radius:6px;margin-bottom:4px">❌ Эзэмшээгүй шалгуур (${gNotDone.length})</summary>
+          ${gNotDone.length?`<ol style="margin:8px 0 0;padding-left:26px;font-size:13px;color:#7f1d1d;line-height:1.7">
+            ${gNotDone.map(x=>`<li><span style="color:#6b7280;font-size:11px">[${escapeHTML(x.cat)}]</span> ${escapeHTML(x.text)}</li>`).join("")}
+          </ol>`:'<div style="padding:8px;font-size:12px;color:#10b981">🎉 Бүгд эзэмшсэн!</div>'}
+        </details>
+      </div>
+
+      <!-- Хөгжмийн -->
+      <div style="background:white;border-radius:12px;padding:16px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:10px">
+          <strong>🎵 Хөгжмийн шалгуур (${level}-р түвшин)</strong>
+          <div style="display:flex;align-items:center;gap:10px">
+            <span style="color:${mColor};font-size:22px;font-weight:800">${mPct}%</span>
+            <span style="font-size:12px;color:var(--muted)">✓${mYes.length} ~${mPartial.length} ✗${mNo.length}</span>
+          </div>
+        </div>
+        <div style="height:10px;background:var(--bg);border-radius:5px;overflow:hidden;margin-bottom:10px;display:flex">
+          <div style="width:${minfo.length?mYes.length/minfo.length*100:0}%;background:#10b981"></div>
+          <div style="width:${minfo.length?mPartial.length/minfo.length*100:0}%;background:#f59e0b"></div>
+        </div>
+        ${mYes.length?`<details open><summary style="cursor:pointer;padding:6px 10px;background:#f0fdf4;color:#065f46;font-weight:600;font-size:13px;border-radius:6px;margin-bottom:4px">✅ Бүрэн эзэмшсэн (${mYes.length})</summary>
+          <ol style="margin:8px 0 0;padding-left:26px;font-size:13px;color:#065f46;line-height:1.7">
+            ${mYes.map(x=>`<li><span style="color:#6b7280;font-size:11px">[${escapeHTML(x.cat)}]</span> ${escapeHTML(x.text)}</li>`).join("")}
+          </ol></details>`:''}
+        ${mPartial.length?`<details style="margin-top:6px"><summary style="cursor:pointer;padding:6px 10px;background:#fffbeb;color:#92400e;font-weight:600;font-size:13px;border-radius:6px;margin-bottom:4px">~ Хэсэгчлэн эзэмшсэн (${mPartial.length})</summary>
+          <ol style="margin:8px 0 0;padding-left:26px;font-size:13px;color:#92400e;line-height:1.7">
+            ${mPartial.map(x=>`<li><span style="color:#6b7280;font-size:11px">[${escapeHTML(x.cat)}]</span> ${escapeHTML(x.text)}</li>`).join("")}
+          </ol></details>`:''}
+        ${mNo.length?`<details style="margin-top:6px"><summary style="cursor:pointer;padding:6px 10px;background:#fef2f2;color:#991b1b;font-weight:600;font-size:13px;border-radius:6px;margin-bottom:4px">❌ Эзэмшээгүй (${mNo.length})</summary>
+          <ol style="margin:8px 0 0;padding-left:26px;font-size:13px;color:#7f1d1d;line-height:1.7">
+            ${mNo.map(x=>`<li><span style="color:#6b7280;font-size:11px">[${escapeHTML(x.cat)}]</span> ${escapeHTML(x.text)}</li>`).join("")}
+          </ol></details>`:''}
+      </div>
+    </div>
+    <h3 style="font-size:15px;margin:20px 0 12px">📝 Үр дүнгийн үнэлгээний бичлэгүүд</h3>`;
 }
 function renderEntryList(entries, section, sub, readonly) {
   const addBtn = readonly ? "" :
@@ -3454,15 +3540,21 @@ function renderSummary() {
   const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
   const level = groupToLevel[state.assessGroup] || 1;
   const tab = state.sumTab || 'general';
+  const view = state.sumView || 'detailed';
   const tabs = [
     { id:"general", name:"📊 Ерөнхий шалгуур" },
     { id:"music", name:"🎵 Хөгжим шалгуур" },
     { id:"attendance", name:"📅 Ирц" }
   ];
   let content = "";
-  if (tab === "general") content = renderGeneralSummary(list, level);
-  else if (tab === "music") content = renderMusicSummary(list, level);
+  if (tab === "general") content = view==='detailed'?renderGeneralDetailed(list, level):renderGeneralSummary(list, level);
+  else if (tab === "music") content = view==='detailed'?renderMusicDetailed(list, level):renderMusicSummary(list, level);
   else if (tab === "attendance") content = renderAttendanceSummary(list);
+  const viewToggle = (tab==='general'||tab==='music') ? `
+    <div style="display:flex;gap:6px;margin-left:auto">
+      <button class="btn btn-sm ${view==='detailed'?'':'btn-secondary'}" onclick="state.sumView='detailed';render()">📖 Дэлгэрэнгүй (нэрээр)</button>
+      <button class="btn btn-sm ${view==='compact'?'':'btn-secondary'}" onclick="state.sumView='compact';render()">📊 Товч (тоогоор)</button>
+    </div>`:'';
   return `
     <div class="breadcrumb">
       <a onclick="goHome()">Нүүр</a><span class="sep">›</span>
@@ -3475,8 +3567,9 @@ function renderSummary() {
         <p class="section-desc" style="margin:0">${list.length} хүүхэд · ${level}-р түвшин</p></div>
       <button class="btn btn-secondary" onclick="showExportMenu('${state.assessGroup}')">📥 Excel татах</button>
     </div>
-    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap">
+    <div style="display:flex;gap:6px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
       ${tabs.map(t => `<button class="btn btn-sm ${tab===t.id?'':'btn-secondary'}" onclick="state.sumTab='${t.id}';render()">${t.name}</button>`).join("")}
+      ${viewToggle}
     </div>
     <div style="overflow-x:auto;background:var(--card);border:1px solid var(--border);border-radius:10px">
       ${content}
@@ -3493,6 +3586,101 @@ function tableStyle() {
     .stbl .no{background:#fef2f2;color:#991b1b}
     .stbl tr:hover td{background:#f9fafb}
   </style>`;
+}
+function renderGeneralDetailed(list, level) {
+  const cats = CRITERIA[level];
+  const info = [];
+  let n = 0;
+  Object.entries(cats).forEach(([cat, arr]) => arr.forEach(t => { n++; info.push({num:n, cat, text:t}); }));
+  if (list.length === 0) return `<div class="empty">Хүүхэд байхгүй</div>`;
+  return `<div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+    ${list.map((c, i) => {
+      const checks = CRITERIA_CHECKS[c.id] || {};
+      const done = info.filter(x => checks[level+"-"+x.num]?.checked);
+      const notDone = info.filter(x => !checks[level+"-"+x.num]?.checked);
+      const pct = n ? Math.round(done.length/n*100) : 0;
+      const color = pct>=80?'#10b981':pct>=50?'#3b82f6':pct>=25?'#f59e0b':'#dc2626';
+      return `
+        <div style="background:white;border:2px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+            ${renderChildAvatar(c, 46)}
+            <div style="flex:1">
+              <h4 style="margin:0;font-size:15px">${i+1}. ${escapeHTML(c.name)}</h4>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">${done.length}/${n} шалгуур биелсэн</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:22px;font-weight:700;color:${color}">${pct}%</div>
+              <div style="width:120px;height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin-top:4px">
+                <div style="width:${pct}%;height:100%;background:${color}"></div>
+              </div>
+            </div>
+          </div>
+          <details ${done.length<=8?'open':''}>
+            <summary style="cursor:pointer;padding:6px 10px;background:#f0fdf4;color:#065f46;font-weight:600;font-size:13px;border-radius:6px;margin-bottom:4px">✅ Биелсэн (${done.length})</summary>
+            ${done.length ? `<ol style="margin:8px 0 0 6px;padding-left:20px;font-size:13px;color:#065f46;line-height:1.7">
+              ${done.map(x => `<li><span style="color:#6b7280;font-size:11px">[${escapeHTML(x.cat)}]</span> ${escapeHTML(x.text)}</li>`).join("")}
+            </ol>`:'<div style="padding:8px;font-size:12px;color:var(--muted)">Хараахан шалгуур биелээгүй</div>'}
+          </details>
+          <details style="margin-top:8px">
+            <summary style="cursor:pointer;padding:6px 10px;background:#fef2f2;color:#991b1b;font-weight:600;font-size:13px;border-radius:6px;margin-bottom:4px">❌ Биелээгүй (${notDone.length})</summary>
+            ${notDone.length ? `<ol style="margin:8px 0 0 6px;padding-left:20px;font-size:13px;color:#7f1d1d;line-height:1.7">
+              ${notDone.map(x => `<li><span style="color:#6b7280;font-size:11px">[${escapeHTML(x.cat)}]</span> ${escapeHTML(x.text)}</li>`).join("")}
+            </ol>`:'<div style="padding:8px;font-size:12px;color:#10b981">🎉 Бүгд биелсэн!</div>'}
+          </details>
+        </div>`;
+    }).join("")}
+  </div>`;
+}
+function renderMusicDetailed(list, level) {
+  const mcats = MUSIC_CRITERIA[level];
+  const info = [];
+  Object.entries(mcats).forEach(([cat, arr]) => arr.forEach((t, i) => info.push({cat, sub:i+1, text:t})));
+  if (list.length === 0) return `<div class="empty">Хүүхэд байхгүй</div>`;
+  return `<div style="padding:16px;display:flex;flex-direction:column;gap:14px">
+    ${list.map((c, i) => {
+      const checks = MUSIC_CHECKS[c.id] || {};
+      const yes = info.filter(x => checks[level+"|"+x.cat+"|"+x.sub]?.status === 'yes');
+      const partial = info.filter(x => checks[level+"|"+x.cat+"|"+x.sub]?.status === 'partial');
+      const no = info.filter(x => checks[level+"|"+x.cat+"|"+x.sub]?.status === 'no');
+      const nothing = info.filter(x => !checks[level+"|"+x.cat+"|"+x.sub]?.status);
+      const score = yes.length + partial.length * 0.5;
+      const pct = info.length ? Math.round(score/info.length*100) : 0;
+      const color = pct>=80?'#10b981':pct>=50?'#3b82f6':pct>=25?'#f59e0b':'#dc2626';
+      return `
+        <div style="background:white;border:2px solid var(--border);border-radius:14px;padding:16px 18px;box-shadow:0 2px 8px rgba(0,0,0,0.04)">
+          <div style="display:flex;gap:12px;align-items:center;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border)">
+            ${renderChildAvatar(c, 46)}
+            <div style="flex:1">
+              <h4 style="margin:0;font-size:15px">${i+1}. ${escapeHTML(c.name)}</h4>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">✓ ${yes.length} · ~ ${partial.length} · ✗ ${no.length} · — ${nothing.length}</div>
+            </div>
+            <div style="text-align:right">
+              <div style="font-size:22px;font-weight:700;color:${color}">${pct}%</div>
+              <div style="width:120px;height:8px;background:var(--bg);border-radius:4px;overflow:hidden;margin-top:4px;display:flex">
+                <div style="width:${yes.length/info.length*100}%;height:100%;background:#10b981"></div>
+                <div style="width:${partial.length/info.length*100}%;height:100%;background:#f59e0b"></div>
+              </div>
+            </div>
+          </div>
+          ${renderMusicDetail('✅ Тийм', yes, '#10b981', '#f0fdf4', '#065f46', yes.length<=6, checks, level)}
+          ${renderMusicDetail('~ Хэсэгчлэн', partial, '#f59e0b', '#fffbeb', '#92400e', false, checks, level)}
+          ${renderMusicDetail('❌ Үгүй', no, '#dc2626', '#fef2f2', '#7f1d1d', false, checks, level)}
+          ${nothing.length ? renderMusicDetail('— Үнэлээгүй', nothing, '#6b7280', '#f9fafb', '#374151', false, checks, level) : ''}
+        </div>`;
+    }).join("")}
+  </div>`;
+}
+function renderMusicDetail(label, items, color, bg, textColor, isOpen, checks, level) {
+  if (items.length === 0) return '';
+  return `<details ${isOpen?'open':''} style="margin-top:8px">
+    <summary style="cursor:pointer;padding:6px 10px;background:${bg};color:${textColor};font-weight:600;font-size:13px;border-radius:6px">${label} (${items.length})</summary>
+    <ol style="margin:8px 0 0 6px;padding-left:20px;font-size:13px;color:${textColor};line-height:1.7">
+      ${items.map(x => {
+        const c = checks[level+"|"+x.cat+"|"+x.sub];
+        return `<li><span style="color:#6b7280;font-size:11px">[${escapeHTML(x.cat)}]</span> ${escapeHTML(x.text)}${c?.note?`<div style="font-size:11px;color:#6b7280;font-style:italic;margin-left:4px">💬 ${escapeHTML(c.note)}</div>`:''}</li>`;
+      }).join("")}
+    </ol>
+  </details>`;
 }
 function renderGeneralSummary(list, level) {
   const cats = CRITERIA[level];
@@ -3688,25 +3876,41 @@ function exportExcel(groupId, kind) {
 
   if (kind === 'general-summary') {
     const cats = CRITERIA[level];
-    const headers = ["№", "Хүүхдийн нэр"];
+    const catGroups = Object.entries(cats);
+    const row1 = ["№", "Хүүхдийн нэр"];
+    const row2 = ["", ""];
+    const info = [];
     let n = 0;
-    Object.entries(cats).forEach(([cat, arr]) => arr.forEach(() => { n++; headers.push(`${n}`); }));
-    headers.push("Нийт %");
-    const rows = [headers];
+    catGroups.forEach(([cat, arr]) => {
+      row1.push(cat);
+      for (let i = 1; i < arr.length; i++) row1.push("");
+      arr.forEach(t => { n++; row2.push(t); info.push({cat, num:n, text:t}); });
+    });
+    row1.push("Нийт %"); row2.push("");
+    const rows = [row1, row2];
     list.forEach((c, i) => {
       const checks = CRITERIA_CHECKS[c.id] || {};
       const row = [i+1, c.name];
       let done = 0;
-      for (let k = 1; k <= n; k++) {
-        const v = checks[level+"-"+k]?.checked;
+      info.forEach(x => {
+        const v = checks[level+"-"+x.num]?.checked;
         row.push(v ? "✓" : "");
         if (v) done++;
-      }
+      });
       row.push(n?Math.round(done/n*100)+"%":"—");
       rows.push(row);
     });
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:5},{wch:25}, ...Array(n).fill({wch:5}), {wch:10}];
+    ws['!cols'] = [{wch:5},{wch:22}, ...Array(n).fill({wch:32}), {wch:10}];
+    const merges = [{s:{r:0,c:0},e:{r:1,c:0}}, {s:{r:0,c:1},e:{r:1,c:1}}];
+    let col = 2;
+    catGroups.forEach(([cat, arr]) => {
+      if (arr.length > 1) merges.push({s:{r:0,c:col},e:{r:0,c:col+arr.length-1}});
+      col += arr.length;
+    });
+    merges.push({s:{r:0,c:col},e:{r:1,c:col}});
+    ws['!merges'] = merges;
+    ws['!rows'] = [{hpt:24}, {hpt:120}];
     save(ws, "Ерөнхий шалгуур", "ерөнхий_шалгуур_нэгтгэл");
   }
 
@@ -3722,16 +3926,23 @@ function exportExcel(groupId, kind) {
 
   else if (kind === 'music-summary') {
     const mcats = MUSIC_CRITERIA[level];
+    const catGroups = Object.entries(mcats);
+    const row1 = ["№", "Хүүхдийн нэр"];
+    const row2 = ["", ""];
     const info = [];
-    Object.entries(mcats).forEach(([cat, arr]) => arr.forEach((t, i) => info.push({cat, num:i+1, text:t})));
-    const headers = ["№", "Хүүхдийн нэр", ...info.map((_,i)=>`${i+1}`), "Нийт %"];
-    const rows = [headers];
+    catGroups.forEach(([cat, arr]) => {
+      row1.push(cat);
+      for (let i = 1; i < arr.length; i++) row1.push("");
+      arr.forEach((t, i) => { row2.push(t); info.push({cat, sub:i+1, text:t}); });
+    });
+    row1.push("Нийт %"); row2.push("");
+    const rows = [row1, row2];
     list.forEach((c, i) => {
       const checks = MUSIC_CHECKS[c.id] || {};
       const row = [i+1, c.name];
       let score = 0;
       info.forEach(x => {
-        const st = checks[level+"|"+x.cat+"|"+x.num]?.status;
+        const st = checks[level+"|"+x.cat+"|"+x.sub]?.status;
         row.push(st==='yes'?"✓ Тийм":st==='partial'?"~ Хэсэг":st==='no'?"✗ Үгүй":"");
         if (st==='yes') score += 1; else if (st==='partial') score += 0.5;
       });
@@ -3739,7 +3950,16 @@ function exportExcel(groupId, kind) {
       rows.push(row);
     });
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [{wch:5},{wch:25}, ...Array(info.length).fill({wch:10}), {wch:10}];
+    ws['!cols'] = [{wch:5},{wch:22}, ...Array(info.length).fill({wch:32}), {wch:10}];
+    const merges = [{s:{r:0,c:0},e:{r:1,c:0}}, {s:{r:0,c:1},e:{r:1,c:1}}];
+    let col = 2;
+    catGroups.forEach(([cat, arr]) => {
+      if (arr.length > 1) merges.push({s:{r:0,c:col},e:{r:0,c:col+arr.length-1}});
+      col += arr.length;
+    });
+    merges.push({s:{r:0,c:col},e:{r:1,c:col}});
+    ws['!merges'] = merges;
+    ws['!rows'] = [{hpt:24}, {hpt:120}];
     save(ws, "Хөгжмийн шалгуур", "хөгжим_шалгуур_нэгтгэл");
   }
 

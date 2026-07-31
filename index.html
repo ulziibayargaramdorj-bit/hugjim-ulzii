@@ -288,13 +288,14 @@ let TASKS = [];
 let DIARY = [];
 let ACHIEVEMENTS = {}; // { childId: [rows] }
 let CAL_EVENTS = [];
+let SONG_LIB = [];
 const MOOD_EMOJIS = ["😊 Гоё өдөр","😍 Маш сайхан","🙂 Хэвийн","😐 Тайван","😔 Ядруу","😤 Хэцүү","🎉 Баярт өдөр","💪 Идэвхтэй","🌈 Урам зоригтой"];
 const TASK_CATEGORIES = ["Заах аргын нэгдлийн үйл ажиллагаа","Хүүхэд хамгаалал","Дотоод хяналт","Ёс зүйн зөвлөл","ХАБ","Архивын үйл ажиллагаа","Өмч хамгаалал","Эд хөрөнгийн тооллого","Цахим хөгжил","Нээлттэй үйл ажиллагаа","Эрдэм шинжилгээний илтгэл судалгаа","Бусад"];
 const AVATAR_EMOJIS = ["👦","👧","🧒","👶","🐻","🐼","🐨","🐯","🦁","🐶","🐱","🐰","🐭","🦊","🐹","🦄","🐸","🐵","🦉","🦋","🌸","🌺","🌻","🌈","⭐","🌟","☀️","🌙","🍎","🍓","🍒","🍭","🎈","🎀","🎵","🎶","🎸","🥁","🎺","🎻"];
 
 // ============ DATA LAYER (Supabase) ============
 async function loadAll() {
-  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes, drRes, achRes, ceRes] = await Promise.all([
+  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes, drRes, achRes, ceRes, slRes] = await Promise.all([
     sb.from('lessons').select('*').order('created_at'),
     sb.from('plans').select('*').order('created_at'),
     sb.from('children').select('*').order('created_at'),
@@ -311,7 +312,8 @@ async function loadAll() {
     sb.from('tasks').select('*').order('created_at', {ascending:false}),
     sb.from('diary').select('*').order('entry_date', {ascending:false}),
     sb.from('achievements').select('*').order('earned_at', {ascending:false}),
-    sb.from('calendar_events').select('*').order('event_date')
+    sb.from('calendar_events').select('*').order('event_date'),
+    sb.from('song_library').select('*').order('kind').order('level').order('title')
   ]);
   MUSIC_CHECKS = {};
   for (const m of (mccRes.data||[])) {
@@ -328,6 +330,7 @@ async function loadAll() {
     ACHIEVEMENTS[a.child_id].push(a);
   }
   CAL_EVENTS = (ceRes && ceRes.data) || [];
+  SONG_LIB = (slRes && slRes.data) || [];
   ATTENDANCE = {};
   for (const a of (atRes.data||[])) {
     if (!ATTENDANCE[a.child_id]) ATTENDANCE[a.child_id] = {};
@@ -448,6 +451,7 @@ function render() {
   else if (state.view === "tasks") body = renderTasks();
   else if (state.view === "diary") body = renderDiary();
   else if (state.view === "calendar") body = renderCalendar();
+  else if (state.view === "songlib") body = renderSongLib();
   else if (state.view === "summary") body = renderSummary();
   else if (state.view === "assessGroups") body = renderAssessGroups();
   else if (state.view === "assessChildren") body = renderAssessChildren();
@@ -587,6 +591,9 @@ function renderHome() {
       <div class="card c4" onclick="state.view='calendar';render()">
         <span class="element-icon">🗓</span><h3>Хуанли</h3>
         <p>Хичээл, тоглолт, үүрэг нэг дор</p></div>
+      <div class="card c6" onclick="state.view='songlib';render()">
+        <span class="element-icon">🎬</span><h3>Дууны сан</h3>
+        <p>Дуу, хөгжимт хөдөлгөөн, сонсох хөгжим</p></div>
     </div>`;
 }
 
@@ -1544,6 +1551,145 @@ async function toggleCriterion(childId, level, num) {
   }
   await loadAll(); render();
 }
+// ============ SONG LIBRARY (ДУУНЫ САН) ============
+function ytEmbed(url) {
+  if (!url) return null;
+  let vid = null;
+  const m1 = url.match(/youtu\.be\/([a-zA-Z0-9_-]+)/);
+  const m2 = url.match(/[?&]v=([a-zA-Z0-9_-]+)/);
+  if (m1) vid = m1[1]; else if (m2) vid = m2[1];
+  return vid ? `https://www.youtube.com/embed/${vid}` : null;
+}
+function renderSongLib() {
+  const isTeacher = state.role === 'teacher';
+  const kind = state.slKind || 'song';
+  const level = state.slLevel || 'all';
+  const search = (state.slSearch||'').toLowerCase();
+  const items = SONG_LIB.filter(s => {
+    if (s.kind !== kind) return false;
+    if (level !== 'all' && s.level != level) return false;
+    if (search && !(s.title.toLowerCase().includes(search) || (s.author||'').toLowerCase().includes(search))) return false;
+    return true;
+  });
+  const kinds = [
+    { id:'song', name:'🎤 Дуу', total: SONG_LIB.filter(x=>x.kind==='song').length },
+    { id:'movement', name:'💃 Хөгжимт хөдөлгөөн', total: SONG_LIB.filter(x=>x.kind==='movement').length },
+    { id:'listening', name:'👂 Сонсох хөгжим', total: SONG_LIB.filter(x=>x.kind==='listening').length }
+  ];
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Дууны сан</span></div>
+    <div class="toolbar">
+      <div><h2 class="section">🎬 Дууны сан</h2>
+        <p class="section-desc" style="margin:0">${SONG_LIB.length} бичлэг · Хайлт, шүүлт хийж, YouTube-с шууд үзэх</p></div>
+      ${isTeacher?`<button class="btn" onclick="openSongModal()">➕ Дуу нэмэх</button>`:''}
+    </div>
+    <div style="background:white;padding:14px;border-radius:12px;margin-bottom:16px">
+      <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap">
+        ${kinds.map(k=>`<button class="btn btn-sm ${kind===k.id?'':'btn-secondary'}" onclick="state.slKind='${k.id}';state.slLevel='all';render()">${k.name} (${k.total})</button>`).join("")}
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+        ${kind==='song'?`
+          <select class="input" style="width:auto" onchange="state.slLevel=this.value;render()">
+            <option value="all">Бүх түвшин</option>
+            <option value="1" ${level=='1'?'selected':''}>I түвшин (Бага)</option>
+            <option value="2" ${level=='2'?'selected':''}>II түвшин (Дунд)</option>
+            <option value="3" ${level=='3'?'selected':''}>III түвшин (Ахлах)</option>
+            <option value="4" ${level=='4'?'selected':''}>IV түвшин (Бэлтгэл)</option>
+          </select>`:''}
+        <input class="input" style="flex:1;min-width:200px" placeholder="🔍 Дуу, зохиогчийн нэрээр хайх..." value="${escapeAttr(state.slSearch||'')}" oninput="state.slSearch=this.value;render()">
+      </div>
+    </div>
+    ${items.length===0?`<div class="empty">Дуу олдсонгүй</div>`:
+    `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:16px">${items.map(s => {
+      const embed = ytEmbed(s.url);
+      const bgs = {song:'#fce7f3', movement:'#dcfce7', listening:'#dbeafe'};
+      const ico = s.kind==='song'?'🎤':s.kind==='movement'?'💃':'👂';
+      return `
+        <div style="background:${bgs[s.kind]};border-radius:14px;padding:14px;position:relative">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px">
+            <span style="font-size:22px">${ico}</span>
+            ${s.level?`<span style="background:white;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">${s.level}-р түвшин</span>`:''}
+          </div>
+          <h4 style="font-size:15px;margin-bottom:4px">${escapeHTML(s.title)}</h4>
+          ${s.author?`<div style="font-size:12px;color:var(--muted);font-style:italic;margin-bottom:8px">${escapeHTML(s.author)}</div>`:''}
+          ${s.notes?`<div style="font-size:12px;margin-bottom:8px">${escapeHTML(s.notes)}</div>`:''}
+          ${embed?`<div style="position:relative;padding-bottom:56.25%;height:0;border-radius:8px;overflow:hidden;background:#000">
+            <iframe src="${embed}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe>
+          </div>`:s.url?`<a href="${escapeAttr(s.url)}" target="_blank" style="display:inline-block;padding:8px 14px;background:white;border-radius:8px;text-decoration:none;color:var(--accent);font-size:13px;font-weight:600">🔗 Линк нээх</a>`:''}
+          ${s.media && s.media.length?`<div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">${s.media.map(m=>renderMediaItem(m)).join("")}</div>`:''}
+          ${isTeacher?`
+            <div style="display:flex;gap:4px;margin-top:10px">
+              <button class="btn btn-secondary btn-sm" onclick="openSongModal('${s.id}')">Засах</button>
+              <button class="btn btn-danger btn-sm" onclick="deleteSong('${s.id}')">Устгах</button>
+            </div>`:''}
+        </div>`;
+    }).join("")}</div>`}`;
+}
+function openSongModal(id) {
+  const s = id ? SONG_LIB.find(x=>x.id===id) : null;
+  showModal(`
+    <h3>${s?"✏️ Дуу засах":"➕ Шинэ дуу"}</h3>
+    <form onsubmit="return saveSong(event,'${id||''}')">
+      <div class="form-group"><label>Төрөл</label>
+        <select class="input" id="s-kind">
+          <option value="song" ${s&&s.kind==='song'?'selected':''}>🎤 Дуу</option>
+          <option value="movement" ${s&&s.kind==='movement'?'selected':''}>💃 Хөгжимт хөдөлгөөн</option>
+          <option value="listening" ${s&&s.kind==='listening'?'selected':''}>👂 Сонсох хөгжим</option>
+        </select></div>
+      <div class="form-group"><label>Гарчиг</label>
+        <input class="input" id="s-title" required value="${s?escapeAttr(s.title):''}"></div>
+      <div class="form-group"><label>Зохиогч</label>
+        <input class="input" id="s-author" value="${s?escapeAttr(s.author||''):''}" placeholder="Үг ..., Ая ..."></div>
+      <div class="form-group"><label>Түвшин (заавал биш — сонсох, хөдөлгөөнд шаардлагагүй)</label>
+        <select class="input" id="s-level">
+          <option value="">—</option>
+          <option value="1" ${s&&s.level==1?'selected':''}>I түвшин</option>
+          <option value="2" ${s&&s.level==2?'selected':''}>II түвшин</option>
+          <option value="3" ${s&&s.level==3?'selected':''}>III түвшин</option>
+          <option value="4" ${s&&s.level==4?'selected':''}>IV түвшин</option>
+        </select></div>
+      <div class="form-group"><label>🔗 YouTube / Drive линк</label>
+        <input class="input" id="s-url" value="${s?escapeAttr(s.url||''):''}" placeholder="https://youtube.com/... эсвэл https://youtu.be/..."></div>
+      <div class="form-group"><label>Тэмдэглэл</label>
+        <textarea class="input" id="s-notes">${s?escapeHTML(s.notes||''):''}</textarea></div>
+      <div class="form-group"><label>Файл (mp3, зураг)</label>
+        <input class="input" id="s-media" type="file" multiple></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="s-save">💾 Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveSong(e, id) {
+  e.preventDefault();
+  const btn = document.getElementById("s-save"); btn.disabled=true; btn.textContent="⏳...";
+  const existing = id ? SONG_LIB.find(x=>x.id===id) : null;
+  const media = existing ? [...(existing.media||[])] : [];
+  for (const f of document.getElementById("s-media").files) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":f.type.startsWith("audio")?"audio":"image", src, label: f.name });
+  }
+  const lvl = document.getElementById("s-level").value;
+  const data = {
+    kind: document.getElementById("s-kind").value,
+    title: document.getElementById("s-title").value.trim(),
+    author: document.getElementById("s-author").value.trim() || null,
+    level: lvl ? parseInt(lvl) : null,
+    url: document.getElementById("s-url").value.trim() || null,
+    notes: document.getElementById("s-notes").value.trim() || null,
+    media
+  };
+  if (id) await sb.from('song_library').update(data).eq('id', id);
+  else await sb.from('song_library').insert(data);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteSong(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('song_library').delete().eq('id', id);
+  await loadAll(); render();
+}
+
 // ============ DIARY (ӨДРИЙН ТЭМДЭГЛЭЛ) ============
 function renderDiary() {
   const isTeacher = state.role === 'teacher';

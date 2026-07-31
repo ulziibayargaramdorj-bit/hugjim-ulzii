@@ -1042,10 +1042,8 @@ function renderPlanGroups() {
 function renderPlan() {
   const g = GROUPS.find(x => x.id === state.planGroup);
   const p = PLANS[state.planGroup] || { yearly:[], monthly:[], lesson:[] };
-  const tab = state.planTab;
+  const tab = 'lesson';
   const tabs = [
-    { id:"yearly", name:"Жилийн" },
-    { id:"monthly", name:"Сарын" },
     { id:"lesson", name:"Ээлжит хичээл" }
   ];
   const items = p[tab] || [];

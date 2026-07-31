@@ -2,28 +2,27 @@
 <html lang="mn"><head><meta charset="UTF-8">
 <title>Хөгжмийн жилийн төлөвлөлт 2026-2027</title>
 <style>
-  @page { size: A3 landscape; margin: 12mm; }
-  body { font-family: "Times New Roman", serif; color:#000; padding: 20px; font-size: 11px; line-height: 1.3; max-width: 1600px; margin: 0 auto; }
+  @page { size: A4 landscape; margin: 10mm; }
+  body { font-family: "Times New Roman", serif; color:#000; padding: 20px; font-size: 12px; line-height: 1.3; max-width: 1400px; margin: 0 auto; }
   .toolbar { display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap; align-items:center; }
   .toolbar a, .toolbar button { padding:6px 12px; border:1px solid #444; border-radius:6px; text-decoration:none; color:#000; background:#fff; font-size:12px; cursor:pointer; font-family:inherit; }
   .toolbar a.active { background:#111; color:#fff; }
   .toolbar .dl { background:#059669; color:#fff; border-color:#059669; }
-  .batlav { text-align:right; margin-bottom: 20px; font-size:12px; }
   .head { text-align:center; margin-bottom: 20px; }
-  .head h1 { font-size: 15px; font-weight:bold; text-transform:uppercase; margin: 6px 0; }
-  .head .date { font-size: 12px; margin-top: 6px; }
-  table { width:100%; border-collapse: collapse; font-size:10px; margin: 10px 0; }
-  th, td { border:1px solid #000; padding:3px 4px; vertical-align:middle; text-align:center; }
+  .head h1 { font-size: 14px; font-weight:bold; margin: 4px 0; }
+  .head .info { font-size: 12px; margin-top: 6px; }
+  .head .right { text-align:right; font-size:12px; margin-bottom:12px; }
+  table { width:100%; border-collapse: collapse; font-size:11px; margin: 10px 0; }
+  th, td { border:1px solid #000; padding:5px 6px; vertical-align:middle; text-align:center; }
   th { background:#e5e7eb; font-weight:bold; }
-  .ai, .dai, .urdun { text-align:left; font-weight:600; }
-  .urdun { font-size:9.5px; }
-  .n1 { background:#c6efce; }
-  .n2 { background:#9bc2e6; }
-  .u1 { background:#ffe699; }
-  .u2 { background:#f4b183; }
-  .bt { background:#d9d9d9; }
-  .legend { margin-top: 20px; font-size:11px; }
-  .legend div { display:flex; align-items:center; gap:8px; margin: 4px 0; }
+  .ai, .dai, .urdun { text-align:left; }
+  .urdun { font-size:11px; line-height:1.35 }
+  .n { background:#86efac; color:#14532d; font-weight:600; }   /* Ногоон — Шинэ мэдлэг */
+  .d { background:#fde047; color:#713f12; }                    /* Шар — Давталт */
+  .foot-n { background:#86efac; font-weight:600; }
+  .foot-d { background:#fde047; font-weight:600; }
+  .legend { margin-top: 16px; font-size:12px; display:flex; gap:20px; flex-wrap:wrap }
+  .legend div { display:flex; align-items:center; gap:8px }
   .legend .sw { display:inline-block; width:20px; height:14px; border:1px solid #000; }
   .note { margin-top:14px; font-size:11px; font-style:italic; }
   .sig { margin-top: 30px; font-size: 12px; text-align:right; }
@@ -45,12 +44,9 @@
 <div id="plan"></div>
 
 <script>
-const CROSS = ["БНО4.1в","ХЯ4.1а","ХЯ4.1б","НСХ4.1а","БНО4.2д","ХЭМ4.1г","БНО4.2в","ХЯ4.2в"];
-
 const LEVELS = {
   1: {
-    title: "БАГА БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ",
-    hours: 2,
+    title: "БАГА БҮЛГИЙН",
     outcomes: [
       { dai:"Мэдрэх", code:"ХӨГ1.1а", text:"Хүн, амьтны дуу авиаг ялган таньдаг болно." },
       { dai:"Илэрхийлэх", code:"ХӨГ1.1б", text:"Дууг анхааралтай сонсож, зарим үг, авиаг дуурайн хэлж, аялна." },
@@ -58,8 +54,7 @@ const LEVELS = {
     ]
   },
   2: {
-    title: "ДУНД БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ",
-    hours: 2,
+    title: "ДУНД БҮЛГИЙН",
     outcomes: [
       { dai:"Мэдрэх", code:"ХӨГ2.1а", text:"Байгаль, эд юмсын дуу чимээг ялгана." },
       { dai:"Илэрхийлэх", code:"ХӨГ2.1б", text:"Дууны аялгууг дагаж, аялна." },
@@ -69,8 +64,7 @@ const LEVELS = {
     ]
   },
   3: {
-    title: "АХЛАХ БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ",
-    hours: 2,
+    title: "АХЛАХ БҮЛГИЙН",
     outcomes: [
       { dai:"Мэдрэх", code:"ХӨГ3.1а", text:"Хөгжмийн энгийн зэмсгийн дуу чимээг ялган таньдаг болно." },
       { dai:"Илэрхийлэх", code:"ХӨГ3.1б", text:"Богино үгтэй дууг аялгууны дагуу дуулна." },
@@ -80,8 +74,7 @@ const LEVELS = {
     ]
   },
   4: {
-    title: "БЭЛТГЭЛ БҮЛГИЙН ХӨГЖМИЙН СУДЛАГДАХУУНЫ",
-    hours: 3,
+    title: "БЭЛТГЭЛ БҮЛГИЙН",
     outcomes: [
       { dai:"Мэдрэх", code:"ХӨГ4.1а", text:"Хөгжмийн энгийн зэмсгийг дуугаралтаар ялгаж, өнгө аясыг тодорхойлно." },
       { dai:"Илэрхийлэх", code:"ХӨГ4.1б", text:"Дуу, аялгууг гарын дохиогоор дуулж, аялна." },
@@ -92,76 +85,150 @@ const LEVELS = {
   }
 };
 
-// Generate 36 cells (9 months × 4 columns) per row for a given code
-// Pattern per 14-хоног: col1=шинэ мэдлэг, col2=уялдаа. Also inject бататгал periodically.
-function generateCells(code, seed) {
-  const cells = [];
-  const lvl = code.match(/ХӨГ(\d)/)[1];
-  const crossByLvl = CROSS.map(c => c.replace(/^([А-Я]+)4/, `$1${lvl}`));
-  for (let m = 0; m < 9; m++) {
-    for (let half = 0; half < 2; half++) {
-      // Column 1 of the 14-хоног: new knowledge or бататгал
-      const isBt = (m === 3 && half === 0) || (m === 5 && half === 1) || (m === 8 && half === 0) || (m === 8 && half === 1);
-      cells.push({ cls: isBt ? "bt" : (half === 0 ? "n1" : "n2"), code });
-      // Column 2: уялдаа
-      const cross = crossByLvl[(seed + m*2 + half) % crossByLvl.length];
-      cells.push({ cls: half === 0 ? "u1" : "u2", code: cross });
-    }
-  }
-  return cells;
+// Уялдааны кодуудын сан
+const CROSS_CODES = {
+  1: ["БНО1.1в","ХЯ1.1а","НСХ1.1а","БНО1.2д","ХЭМ1.1г"],
+  2: ["БНО2.1в","ХЯ2.1а","НСХ2.1а","БНО2.2д","ХЭМ2.1г","ХЯ2.1б"],
+  3: ["БНО3.1в","ХЯ3.1а","НСХ3.1а","БНО3.2д","ХЭМ3.1г","ХЯ3.1б","БНО3.2в"],
+  4: ["БНО4.1в","ХЯ4.1а","НСХ4.1а","БНО4.2д","ХЭМ4.1г","ХЯ4.1б","БНО4.2в","ХЯ4.2в","ХЭМ4.2а","БНО4.1б"]
+};
+
+// Хүснэгт үүсгэх:
+// - Мөр бүр 1 суралцахуйн үр дүн
+// - Багана бүр 1 сар (9 сар)
+// - Ногоон нүд: Шинэ мэдлэг оруулсан сар + уялдааны код гарна
+// - Шар нүд: Давталт хийсэн сар (уялдааны код гарч болно)
+// - Хоосон нүд: Тухайн сард энэ үр дүн ороогүй
+function buildPlan(level, L) {
+  const totalOutcomes = L.outcomes.length;
+  const months = 9;
+  const cross = CROSS_CODES[level];
+
+  // Шинэ мэдлэгийг эхний хагас жилд тархаана
+  // Тухайн үр дүн 1 сар шинэ, дараа нь 5-7 удаа давталт хийнэ
+  const grid = L.outcomes.map((o, i) => {
+    const row = new Array(months).fill(null);
+    // Шинэ мэдлэг: outcome бүрийг ялгаж бүх сард тархаана
+    const newMonth = Math.min(Math.floor(i * months / totalOutcomes), months-1);
+    row[newMonth] = { type: 'n', code: cross[(i*2) % cross.length] };
+    // Давталт: шинэ мэдлэгээс хойш эхлээд бататгах, өөр сард уялдуулах
+    const repeatMonths = [];
+    for (let m = 0; m < months; m++) if (m !== newMonth) repeatMonths.push(m);
+    // 6-7 удаа давталт (сард 1) — үр дүн бүрд ойролцоогоор
+    repeatMonths.forEach((m, idx) => {
+      // Шинэ мэдлэгээс хойшхи 3 сар шууд бататгах
+      if (m > newMonth) {
+        row[m] = { type: 'd', code: cross[(i*2 + idx + 1) % cross.length] };
+      } else if (m < newMonth) {
+        // Шинэ мэдлэгээс өмнөх сар — хоосон (өөр үр дүн орж байгаа)
+        row[m] = null;
+      }
+    });
+    return { outcome:o, cells:row };
+  });
+
+  return grid;
 }
 
 function render(level) {
   const L = LEVELS[level];
-  const months = ["09 сар","10 сар","11 сар","12 сар","1 сар","2 сар","3 сар","4 сар","5 сар"];
+  const grid = buildPlan(level, L);
+  const months = ["9","10","11","12","1","2","3","4","5"];
+  const monthCount = 9;
+
+  // Багана толгойн долоо хоногийн дугаар: 4 долоо хоног × 9 сар = 36
+  // Гэхдээ сард нэг багана л харагдана
+  const weekLabels = ["4","4","4","4","4","4","4","4","4"]; // 4 хичээл сард (2 хичээл × 2 долоо хоног ажлын үзүүлэлт)
+
+  // Тоолуур
+  const totalPerMonth = new Array(monthCount).fill(0);
+  const newPerMonth = new Array(monthCount).fill(0);
+  const repPerMonth = new Array(monthCount).fill(0);
+  grid.forEach(row => {
+    row.cells.forEach((c, m) => {
+      if (c) {
+        totalPerMonth[m]++;
+        if (c.type === 'n') newPerMonth[m]++;
+        else repPerMonth[m]++;
+      }
+    });
+  });
+  const totalRow = grid.map(row => row.cells.filter(c => c && c.type === 'd').length);
+  const totalNew = grid.map(row => row.cells.filter(c => c && c.type === 'n').length);
+  const grandTotal = totalRow.reduce((a,b)=>a+b,0) + totalNew.reduce((a,b)=>a+b,0);
+
   let html = `
-    <div class="batlav">
-      БАТЛАВ<br>АРГА ЗҮЙЧ:  ...................................<br>2026 оны 09 сарын ...... өдөр
-    </div>
     <div class="head">
-      <h1>${L.title}</h1>
-      <h1>2026-2027 ОНЫ ХИЧЭЭЛИЙН ЖИЛИЙН СУРГАЛТЫН ХӨТӨЛБӨР</h1>
-      <div class="date">7 хоногт ${L.hours} цаг · 2026 оны 09 сарын 01</div>
+      <div class="right">
+        <strong>БАТЛАВ:</strong> АРГА ЗҮЙЧ .............................. · 2026 оны 09-р сарын ..... өдөр
+      </div>
+      <h1>СУРГУУЛЬ ЦЭЦЭРЛЭГИЙН БАЯН-ОЙТ ЦОГЦОЛБОРЫН "${L.title}" БҮЛГИЙН</h1>
+      <h1>ХӨГЖМИЙН СУРГАЛТ, ҮЙЛ АЖИЛЛАГААНЫ ЖИЛИЙН ТӨЛӨВЛӨЛТ</h1>
+      <div class="info">2026-2027 оны хичээлийн жил · 7 хоногт 2 хичээл · Нийт 72 хичээл</div>
     </div>
+
     <table>
       <thead>
         <tr>
-          <th rowspan="3" style="width:90px">Ай</th>
-          <th rowspan="3" style="width:75px">Дэд ай</th>
-          <th rowspan="3" style="width:250px">Суралцахуйн үр дүн</th>
-          ${months.map(m => `<th colspan="4">${m}</th>`).join("")}
+          <th style="width:36px" rowspan="2">№</th>
+          <th style="width:70px" rowspan="2">Ай</th>
+          <th style="width:90px" rowspan="2">Дэд ай</th>
+          <th style="width:340px" rowspan="2">Суралцахуйн үр дүн</th>
+          <th colspan="${monthCount}">САР</th>
+          <th style="width:80px" rowspan="2">Давтамж</th>
         </tr>
-        <tr>${months.map(() => `<th colspan="2">I-14 хон.</th><th colspan="2">II-14 хон.</th>`).join("")}</tr>
-        <tr>${Array.from({length:36}, (_,i)=>`<th style="width:22px">${i+1}</th>`).join("")}</tr>
+        <tr>${months.map(m=>`<th>${m}</th>`).join("")}</tr>
       </thead>
       <tbody>
-        ${L.outcomes.map((o, i) => {
-          const cells = generateCells(o.code, i);
-          return `<tr>
+        ${grid.map((row, i) => `
+          <tr>
+            <td>${i+1}</td>
             <td class="ai">Хөгжмийн илэрхийлэл</td>
-            <td class="dai">${o.dai}</td>
-            <td class="urdun">${o.code}. ${o.text.replace(o.code+".","").trim()}</td>
-            ${cells.map(c => `<td class="${c.cls}">${c.code}</td>`).join("")}
-          </tr>`;
-        }).join("")}
+            <td class="dai">${row.outcome.dai}</td>
+            <td class="urdun"><strong>${row.outcome.code}.</strong> ${row.outcome.text}</td>
+            ${row.cells.map(c => {
+              if (!c) return '<td></td>';
+              return `<td class="${c.type}">${c.code}</td>`;
+            }).join("")}
+            <td><strong>${row.cells.filter(c=>c).length}</strong></td>
+          </tr>
+        `).join("")}
+        <tr>
+          <td colspan="4" class="foot-n" style="text-align:right;padding-right:12px">🟢 Шинэ СҮД (сар тус бүр)</td>
+          ${newPerMonth.map(n => `<td class="foot-n">${n||''}</td>`).join("")}
+          <td class="foot-n"><strong>${totalNew.reduce((a,b)=>a+b,0)}</strong></td>
+        </tr>
+        <tr>
+          <td colspan="4" class="foot-d" style="text-align:right;padding-right:12px">🟡 Давталт (сар тус бүр)</td>
+          ${repPerMonth.map(n => `<td class="foot-d">${n||''}</td>`).join("")}
+          <td class="foot-d"><strong>${totalRow.reduce((a,b)=>a+b,0)}</strong></td>
+        </tr>
+        <tr>
+          <td colspan="4" style="text-align:right;padding-right:12px;background:#f3f4f6"><strong>Нийт үзүүлэлт</strong></td>
+          ${totalPerMonth.map(n => `<td style="background:#f3f4f6"><strong>${n}</strong></td>`).join("")}
+          <td style="background:#f3f4f6"><strong>${grandTotal}</strong></td>
+        </tr>
       </tbody>
     </table>
+
     <div class="legend">
-      <strong>Тэмдэглэгээ:</strong>
-      <div><span class="sw n1"></span> Шинэ мэдлэг (эхний 14 хоног)</div>
-      <div><span class="sw n2"></span> Шинэ мэдлэг (сүүлийн 14 хоног)</div>
-      <div><span class="sw u1"></span> Уялдаа 1 (эхний 14 хоногийн)</div>
-      <div><span class="sw u2"></span> Уялдаа 2 (сүүлийн 14 хоногийн)</div>
-      <div><span class="sw bt"></span> Бататгал</div>
+      <div><span class="sw n"></span> <strong>🟢 Ногоон — Шинэ мэдлэг (СҮД)</strong> — тухайн үр дүнг шинээр таниулна</div>
+      <div><span class="sw d"></span> <strong>🟡 Шар — Давталт</strong> — сурсан мэдлэгийг бататгана + бусад хичээлтэй уялдуулна</div>
     </div>
+
     <div class="note">
-      Сарын төлөвлөлтийг 14 хоногоор буюу сард 2 удаа хийхээр төлөвлөж, 14 хоногтоо 2 шинэ мэдлэг олгохоор төлөвлөж хийсэн.<br>
-      Уялдаа холбоо: <strong>БНО</strong> — Байгаль нийгмийн орчин, <strong>ХЯ</strong> — Хэл яриа, <strong>НСХ</strong> — Нийгэм-сэтгэл хөдлөл, <strong>ХЭМ</strong> — Математик, <strong>ХӨГ</strong> — Хөгжим.
+      <strong>Уялдаа холбоо:</strong> <strong>БНО</strong> — Байгаль нийгмийн орчин, <strong>ХЯ</strong> — Хэл яриа, <strong>НСХ</strong> — Нийгэм-сэтгэл хөдлөл, <strong>ХЭМ</strong> — Хэмжигдэхүүн (математик), <strong>ХӨГ</strong> — Хөгжим.<br>
+      Шинэ мэдлэг олгосон үр дүн бүрийг сар бүрт давхар давталтаар бататгана. Долоо хоногт 2 хичээл × 36 долоо хоног = <strong>нийт 72 хичээл</strong>.
     </div>
-    <div class="sig">ХӨТӨЛБӨР БОЛОВСРУУЛСАН: ХӨГЖМИЙН БАГШ <strong>Г.ӨЛЗИЙБАЯР</strong></div>`;
+
+    <div class="sig">
+      ХӨТӨЛБӨР БОЛОВСРУУЛСАН:<br>
+      ХӨГЖМИЙН БАГШ <strong>Г.ӨЛЗИЙБАЯР</strong>
+    </div>`;
+
   document.getElementById("plan").innerHTML = html;
   document.querySelectorAll(".toolbar a").forEach(a => a.classList.toggle("active", a.dataset.lvl === String(level)));
-  document.title = `${L.title.replace(/ХӨГЖМИЙН СУДЛАГДАХУУНЫ/,'').trim()} — Жилийн төлөвлөлт 2026-2027`;
+  document.title = `${L.title} — Жилийн төлөвлөлт 2026-2027`;
 }
 
 function currentLevel() {

@@ -1009,7 +1009,28 @@ function renderPlanGroups() {
   return `
     <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Хөтөлбөр төлөвлөгөө</span></div>
     <h2 class="section">📋 Хөтөлбөр төлөвлөгөө</h2>
-    <p class="section-desc">Бүлгээ сонго</p>
+    <p class="section-desc">Бүлэг сонгож жил/сар/ээлжит төлөвлөгөө засах, эсвэл автомат үүсгэгч ашиглах</p>
+
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:14px;margin-bottom:24px">
+      <a href="plan.html" target="_blank" style="text-decoration:none;color:inherit">
+        <div class="card c3" style="cursor:pointer">
+          <span class="element-icon">📅</span>
+          <h3>Жилийн төлөвлөлт (Матриц)</h3>
+          <p>🟢 Шинэ мэдлэг · 🟡 Давталт · 4 бүлэгт бэлэн</p>
+          <span class="badge">Автомат үүсгэгч</span>
+        </div>
+      </a>
+      <a href="monthly.html" target="_blank" style="text-decoration:none;color:inherit">
+        <div class="card c5" style="cursor:pointer">
+          <span class="element-icon">📆</span>
+          <h3>Сарын төлөвлөгөө үүсгэгч</h3>
+          <p>🎵 Дуу, хөгжимт хөдөлгөөн, сонсох хөгжим · 4 хувилбар · Word татах</p>
+          <span class="badge">Арга зүйч батлах хэсэгтэй</span>
+        </div>
+      </a>
+    </div>
+
+    <h3 style="font-size:16px;margin-bottom:12px;color:var(--muted)">📝 Гараар засах — бүлэг сонго:</h3>
     <div class="grid">
       ${GROUPS.map(g => `
         <div class="card" onclick="goPlan('${g.id}')">

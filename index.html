@@ -1042,8 +1042,14 @@ function renderPlanGroups() {
 function renderPlan() {
   const g = GROUPS.find(x => x.id === state.planGroup);
   const p = PLANS[state.planGroup] || { yearly:[], monthly:[], lesson:[] };
-  const tab = 'lesson';
-  const tabs = [
+  const isDuguilan = state.planGroup === 'duguilan';
+  const defaultTab = isDuguilan ? (state.planTab || 'yearly') : 'lesson';
+  const tab = defaultTab;
+  const tabs = isDuguilan ? [
+    { id:"yearly", name:"🗓 Жилийн" },
+    { id:"monthly", name:"📅 Сарын" },
+    { id:"lesson", name:"🎯 Ээлжит" }
+  ] : [
     { id:"lesson", name:"Ээлжит хичээл" }
   ];
   const items = p[tab] || [];
@@ -1083,14 +1089,15 @@ function renderPlan() {
     </div>
     <div class="toolbar">
       <div><h2 class="section">${g.name} — Төлөвлөгөө</h2></div>
-      <button class="btn" onclick="${tab==='lesson'?"openPlanModal()":"openPlanUpload()"}">${tab==='lesson'?'+ Нэмэх':'📎 Файл оруулах'}</button>
+      <button class="btn" onclick="${(tab==='lesson' && !isDuguilan)?"openPlanModal()":"openPlanUpload()"}">${(tab==='lesson' && !isDuguilan)?'+ Нэмэх':'📎 Файл оруулах'}</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap">${tabsHTML}</div>
     ${renderPlanAutoBanner(state.planGroup, tab)}
     ${listHTML}`;
 }
 function renderPlanAutoBanner(gid, tab) {
-  const levelMap = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  if (gid === 'duguilan') return ''; // Дугуйлан бол автомат баннер харагдахгүй, зөвхөн файл оруулна
+  const levelMap = { baga:1, dund:2, ahlah:3, beltgel:4 };
   const lvl = levelMap[gid] || 1;
   if (tab === 'yearly') {
     return `
@@ -1123,7 +1130,7 @@ function renderPlanAutoBanner(gid, tab) {
   return '';
 }
 function openPlanUpload() {
-  const tabName = state.planTab === 'yearly' ? 'Жилийн' : 'Сарын';
+  const tabName = state.planTab === 'yearly' ? 'Жилийн' : state.planTab === 'monthly' ? 'Сарын' : 'Ээлжит';
   showModal(`
     <h3>📎 ${tabName} төлөвлөгөөний файл оруулах</h3>
     <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Word, PDF, PPTX эсвэл ямар ч файл байрлуулна. Багш өөрөө бэлдсэн төлөвлөгөөгөө шууд оруулж болно.</p>

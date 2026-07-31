@@ -348,7 +348,7 @@ function checkAndFireNotifs() {
   LAST_NOTIF_STATE = n;
 }
 const MOOD_EMOJIS = ["😊 Гоё өдөр","😍 Маш сайхан","🙂 Хэвийн","😐 Тайван","😔 Ядруу","😤 Хэцүү","🎉 Баярт өдөр","💪 Идэвхтэй","🌈 Урам зоригтой"];
-const TASK_CATEGORIES = ["Заах аргын нэгдлийн үйл ажиллагаа","Хүүхэд хамгаалал","Дотоод хяналт","Ёс зүйн зөвлөл","ХАБ","Архивын үйл ажиллагаа","Өмч хамгаалал","Эд хөрөнгийн тооллого","Цахим хөгжил","Нээлттэй үйл ажиллагаа","Эрдэм шинжилгээний илтгэл судалгаа","Бусад"];
+const TASK_CATEGORIES = ["Сургалт үйл ажиллагааны талаар","Заах аргын нэгдлийн үйл ажиллагаа","Хүүхэд хамгаалал","Дотоод хяналт","Ёс зүйн зөвлөл","ХАБ","Архивын үйл ажиллагаа","Өмч хамгаалал","Эд хөрөнгийн тооллого","Цахим хөгжил","Нээлттэй үйл ажиллагаа","Эрдэм шинжилгээний илтгэл судалгаа","Бусад"];
 const AVATAR_EMOJIS = ["👦","👧","🧒","👶","🐻","🐼","🐨","🐯","🦁","🐶","🐱","🐰","🐭","🦊","🐹","🦄","🐸","🐵","🦉","🦋","🌸","🌺","🌻","🌈","⭐","🌟","☀️","🌙","🍎","🍓","🍒","🍭","🎈","🎀","🎵","🎶","🎸","🥁","🎺","🎻"];
 
 // ============ DATA LAYER (Supabase) ============
@@ -3207,9 +3207,18 @@ function renderMethodistHome() {
       <div class="card c3" onclick="state.view='tasks';render()">
         <span class="element-icon">📌</span><h3>Үүрэг даалгавар</h3>
         <p>Ажлын хэсэг, гүйцэтгэл шалгах</p></div>
+      <div class="card c4" onclick="state.view='monthlyReport';render()">
+        <span class="element-icon">📊</span><h3>Сарын нэгдсэн тайлан</h3>
+        <p>Бүлэг тус бүрээр автомат тайлан</p></div>
+      <div class="card c6" onclick="state.view='activityGroups';render()">
+        <span class="element-icon">📸</span><h3>Сургалт, үйл ажиллагаа</h3>
+        <p>Багшийн хичээлийн зураг, тэмдэглэл</p></div>
       <div class="card c9" onclick="state.view='announcements';render()">
         <span class="element-icon">📢</span><h3>Зар мэдээ үзэх</h3>
         <p>Цэцэрлэгийн зар мэдээллүүд</p></div>
+      <div class="card c1" onclick="state.view='portfolio';render()">
+        <span class="element-icon">👤</span><h3>Багшийн танилцуулга</h3>
+        <p>Портфолио, боловсрол, туршлага</p></div>
     </div>
     <div style="background:white;padding:16px;border-radius:12px;margin-bottom:14px">
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">

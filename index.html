@@ -1088,7 +1088,41 @@ function renderPlan() {
       <button class="btn" onclick="openPlanModal()">+ Нэмэх</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap">${tabsHTML}</div>
+    ${renderPlanAutoBanner(state.planGroup, tab)}
     ${listHTML}`;
+}
+function renderPlanAutoBanner(gid, tab) {
+  const levelMap = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  const lvl = levelMap[gid] || 1;
+  if (tab === 'yearly') {
+    return `
+      <a href="plan.html#${lvl}" target="_blank" style="text-decoration:none;color:inherit">
+        <div style="background:linear-gradient(135deg,#dcfce7,#fef3c7,#dbeafe);border-radius:14px;padding:16px 20px;margin-bottom:16px;border-left:5px solid #10b981;cursor:pointer;box-shadow:0 4px 12px rgba(16,185,129,0.1)">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:16px;font-weight:700;color:#065f46">📅 Автомат үүсгэсэн жилийн матриц</div>
+              <div style="font-size:13px;color:#064e3b;margin-top:4px">🟢 Шинэ мэдлэг · 🟡 Давталт · СҮД × 9 сар · Багш өөрөө засаж болно</div>
+            </div>
+            <button class="btn btn-sm">Нээх →</button>
+          </div>
+        </div>
+      </a>`;
+  }
+  if (tab === 'monthly') {
+    return `
+      <a href="monthly.html#${lvl}-9" target="_blank" style="text-decoration:none;color:inherit">
+        <div style="background:linear-gradient(135deg,#fef3c7,#fed7aa,#fce7f3);border-radius:14px;padding:16px 20px;margin-bottom:16px;border-left:5px solid #f59e0b;cursor:pointer;box-shadow:0 4px 12px rgba(245,158,11,0.1)">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-size:16px;font-weight:700;color:#7c2d12">📆 Автомат үүсгэсэн сарын төлөвлөгөө</div>
+              <div style="font-size:13px;color:#78350f;margin-top:4px">🎵 Дуу · 👂 Сонсох хөгжим · 💃 Хөдөлгөөн · 4 хувилбар · Арга зүйч батлах хэсэгтэй · Word татах</div>
+            </div>
+            <button class="btn btn-sm">Нээх →</button>
+          </div>
+        </div>
+      </a>`;
+  }
+  return '';
 }
 function openPlanModal(id) {
   const p = PLANS[state.planGroup][state.planTab];

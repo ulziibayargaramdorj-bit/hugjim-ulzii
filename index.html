@@ -1085,7 +1085,7 @@ function renderPlan() {
     </div>
     <div class="toolbar">
       <div><h2 class="section">${g.name} — Төлөвлөгөө</h2></div>
-      <button class="btn" onclick="openPlanModal()">+ Нэмэх</button>
+      <button class="btn" onclick="${tab==='lesson'?"openPlanModal()":"openPlanUpload()"}">${tab==='lesson'?'+ Нэмэх':'📎 Файл оруулах'}</button>
     </div>
     <div style="display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap">${tabsHTML}</div>
     ${renderPlanAutoBanner(state.planGroup, tab)}
@@ -1123,6 +1123,45 @@ function renderPlanAutoBanner(gid, tab) {
       </a>`;
   }
   return '';
+}
+function openPlanUpload() {
+  const tabName = state.planTab === 'yearly' ? 'Жилийн' : 'Сарын';
+  showModal(`
+    <h3>📎 ${tabName} төлөвлөгөөний файл оруулах</h3>
+    <p style="color:var(--muted);font-size:13px;margin-bottom:14px">Word, PDF, PPTX эсвэл ямар ч файл байрлуулна. Багш өөрөө бэлдсэн төлөвлөгөөгөө шууд оруулж болно.</p>
+    <form onsubmit="return savePlanUpload(event)">
+      <div class="form-group"><label>📝 Гарчиг</label>
+        <input class="input" id="pu-title" required placeholder="Ж: 9-р сарын төлөвлөгөө"></div>
+      <div class="form-group"><label>📅 Хугацаа (заавал биш)</label>
+        <input class="input" id="pu-period" placeholder="Ж: 2026-09"></div>
+      <div class="form-group"><label>📎 Файл (Word, PDF, PPTX)</label>
+        <input class="input" id="pu-files" type="file" multiple required></div>
+      <div class="form-group"><label>💬 Тайлбар (заавал биш)</label>
+        <textarea class="input" id="pu-note"></textarea></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="pu-save">💾 Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function savePlanUpload(e) {
+  e.preventDefault();
+  const btn = document.getElementById("pu-save"); btn.disabled=true; btn.textContent="⏳ Хуулж байна...";
+  const files = [];
+  for (const f of document.getElementById("pu-files").files) {
+    const src = await uploadFile(f);
+    if (src) files.push({ src, label: f.name });
+  }
+  const data = {
+    group_id: state.planGroup, tab: state.planTab,
+    title: document.getElementById("pu-title").value.trim(),
+    period: document.getElementById("pu-period").value.trim(),
+    content: document.getElementById("pu-note").value.trim(),
+    files, media: []
+  };
+  await sb.from('plans').insert(data);
+  await loadAll(); closeModal(); render();
+  return false;
 }
 function openPlanModal(id) {
   const p = PLANS[state.planGroup][state.planTab];

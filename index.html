@@ -292,13 +292,68 @@ let SONG_LIB = [];
 let HOMEWORK = {}; // { childId: [rows] }
 let FEEDBACK = {}; // { childId: [rows] }
 let PROFILE = null;
+let ACTIVITIES = {}; // { group_id: [rows] }
+let LAST_NOTIF_STATE = null;
+const NOTIF_KEYS = {
+  tasks:'ntf_tasks', methodist_notes:'ntf_mn', announcements:'ntf_ann',
+  messages:'ntf_msg', feedback:'ntf_fb', activities:'ntf_act', homework:'ntf_hw'
+};
+function getLastSeen(k) { return localStorage.getItem(NOTIF_KEYS[k]) || '2020-01-01'; }
+function markSeen(k) { localStorage.setItem(NOTIF_KEYS[k], new Date().toISOString()); }
+function computeNotifs() {
+  const n = {tasks:0, methodist_notes:0, announcements:0, messages:0, feedback:0, activities:0, homework:0};
+  const role = state.role;
+  if (role === 'teacher') {
+    n.tasks = TASKS.filter(t => t.created_at > getLastSeen('tasks')).length;
+    n.methodist_notes = METHODIST_NOTES.filter(m => m.created_at > getLastSeen('methodist_notes')).length;
+    let fb = 0; for (const c in FEEDBACK) fb += FEEDBACK[c].filter(f => f.created_at > getLastSeen('feedback')).length;
+    n.feedback = fb;
+    let msg = 0; for (const c in MESSAGES) msg += (MESSAGES[c]||[]).filter(m => m.from_role==='parent' && m.created_at > getLastSeen('messages')).length;
+    n.messages = msg;
+  } else if (role === 'parent') {
+    n.announcements = ANNOUNCEMENTS.filter(a => a.created_at > getLastSeen('announcements')).length;
+    const cid = state.parentChildId;
+    n.messages = (MESSAGES[cid]||[]).filter(m => m.from_role==='teacher' && m.created_at > getLastSeen('messages')).length;
+    n.homework = (HOMEWORK[cid]||[]).filter(h => h.created_at > getLastSeen('homework')).length;
+    const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === cid));
+    if (g) n.activities = (ACTIVITIES[g.id]||[]).filter(a => a.created_at > getLastSeen('activities')).length;
+  } else if (role === 'methodist') {
+    n.tasks = TASKS.filter(t => !t.approved_at).length;
+  }
+  return n;
+}
+async function requestNotifPermission() {
+  if (!("Notification" in window)) return;
+  if (Notification.permission === "default") {
+    try { await Notification.requestPermission(); } catch(e){}
+  }
+}
+function fireBrowserNotif(title, body) {
+  if (typeof Notification === "undefined" || Notification.permission !== "granted") return;
+  try { new Notification(title, { body, icon: "https://music-teacher-ulzii.netlify.app/favicon.ico", tag: "hugjim" }); } catch(e){}
+}
+function checkAndFireNotifs() {
+  const n = computeNotifs();
+  const msgs = {
+    tasks:'🆕 үүрэг даалгавар', methodist_notes:'🎓 арга зүйн зөвлөгөө',
+    announcements:'📢 шинэ зар мэдээ', messages:'💬 шинэ зурвас',
+    feedback:'⭐ санал хүсэлт', activities:'📸 шинэ хичээл', homework:'📥 шинэ даалгавар'
+  };
+  if (LAST_NOTIF_STATE !== null) {
+    for (const k in n) {
+      const diff = n[k] - (LAST_NOTIF_STATE[k]||0);
+      if (diff > 0) fireBrowserNotif("🎵 Хөгжим Өлзий", `${diff} ${msgs[k]}`);
+    }
+  }
+  LAST_NOTIF_STATE = n;
+}
 const MOOD_EMOJIS = ["😊 Гоё өдөр","😍 Маш сайхан","🙂 Хэвийн","😐 Тайван","😔 Ядруу","😤 Хэцүү","🎉 Баярт өдөр","💪 Идэвхтэй","🌈 Урам зоригтой"];
 const TASK_CATEGORIES = ["Заах аргын нэгдлийн үйл ажиллагаа","Хүүхэд хамгаалал","Дотоод хяналт","Ёс зүйн зөвлөл","ХАБ","Архивын үйл ажиллагаа","Өмч хамгаалал","Эд хөрөнгийн тооллого","Цахим хөгжил","Нээлттэй үйл ажиллагаа","Эрдэм шинжилгээний илтгэл судалгаа","Бусад"];
 const AVATAR_EMOJIS = ["👦","👧","🧒","👶","🐻","🐼","🐨","🐯","🦁","🐶","🐱","🐰","🐭","🦊","🐹","🦄","🐸","🐵","🦉","🦋","🌸","🌺","🌻","🌈","⭐","🌟","☀️","🌙","🍎","🍓","🍒","🍭","🎈","🎀","🎵","🎶","🎸","🥁","🎺","🎻"];
 
 // ============ DATA LAYER (Supabase) ============
 async function loadAll() {
-  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes, drRes, achRes, ceRes, slRes, hwRes, pfRes, tpRes] = await Promise.all([
+  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes, drRes, achRes, ceRes, slRes, hwRes, pfRes, tpRes, actRes] = await Promise.all([
     sb.from('lessons').select('*').order('created_at'),
     sb.from('plans').select('*').order('created_at'),
     sb.from('children').select('*').order('created_at'),
@@ -319,7 +374,8 @@ async function loadAll() {
     sb.from('song_library').select('*').order('kind').order('level').order('title'),
     sb.from('homework').select('*').order('created_at', {ascending:false}),
     sb.from('parent_feedback').select('*').order('created_at', {ascending:false}),
-    sb.from('teacher_profile').select('*').limit(1).maybeSingle()
+    sb.from('teacher_profile').select('*').limit(1).maybeSingle(),
+    sb.from('activities').select('*').order('activity_date', {ascending:false})
   ]);
   MUSIC_CHECKS = {};
   for (const m of (mccRes.data||[])) {
@@ -348,6 +404,11 @@ async function loadAll() {
     FEEDBACK[f.child_id].push(f);
   }
   PROFILE = (tpRes && tpRes.data) || null;
+  ACTIVITIES = {};
+  for (const a of ((actRes && actRes.data)||[])) {
+    if (!ACTIVITIES[a.group_id]) ACTIVITIES[a.group_id] = [];
+    ACTIVITIES[a.group_id].push(a);
+  }
   ATTENDANCE = {};
   for (const a of (atRes.data||[])) {
     if (!ATTENDANCE[a.child_id]) ATTENDANCE[a.child_id] = {};
@@ -416,8 +477,16 @@ const state = { view: "login", group: null, element: null, planTab: "yearly", pl
   role: null, parentChildId: null };
 
 // ============ INIT ============
+setInterval(async () => {
+  if (!state.role || state.view === 'login') return;
+  try { await loadAll(); checkAndFireNotifs();
+    if (['home','methodistHome','parentView'].includes(state.view)) render();
+  } catch(e) {}
+}, 60000);
 (async () => {
   try { await loadAll(); } catch(e) { alert("Мэдээллийн сан холбогдоход алдаа: "+e.message); }
+  requestNotifPermission();
+  LAST_NOTIF_STATE = computeNotifs();
   const auth = sessionStorage.getItem("auth");
   if (auth === "teacher") { state.role = "teacher"; state.view = "home"; }
   else if (auth && auth.startsWith("parent:")) {
@@ -470,6 +539,8 @@ function render() {
   else if (state.view === "calendar") body = renderCalendar();
   else if (state.view === "songlib") body = renderSongLib();
   else if (state.view === "portfolio") body = renderPortfolio();
+  else if (state.view === "activityGroups") body = renderActivityGroups();
+  else if (state.view === "activities") body = renderActivities();
   else if (state.view === "summary") body = renderSummary();
   else if (state.view === "assessGroups") body = renderAssessGroups();
   else if (state.view === "assessChildren") body = renderAssessChildren();
@@ -545,10 +616,56 @@ function goLessons(elid) { state.element = elid; state.view = "lessons"; render(
 function goPlan(gid) { state.planGroup = gid; state.planTab = "yearly"; state.view = "plan"; render(); }
 
 // ============ HOME / GROUPS / ELEMENTS / LESSONS ============
+function renderNotifBanner() {
+  const n = computeNotifs();
+  const total = Object.values(n).reduce((a,b)=>a+b,0);
+  if (total === 0) return '';
+  const labels = {
+    tasks:['📌 Шинэ үүрэг',()=>state.view='tasks'],
+    methodist_notes:['🎓 Арга зүйчийн заавар',()=>state.view='methodist'],
+    announcements:['📢 Зар мэдээ',()=>state.view='announcements'],
+    messages:['💬 Шинэ зурвас',()=>state.view=state.role==='teacher'?'messagesGroups':'chat'],
+    feedback:['⭐ Санал хүсэлт',()=>state.view='assessGroups'],
+    activities:['📸 Хичээлийн бичлэг',()=>state.role==='parent'?(()=>{const g=GROUPS.find(gr=>(CHILDREN[gr.id]||[]).some(c=>c.id===state.parentChildId));if(g){state.actGroup=g.id;state.view='activities';}})():state.view='activityGroups'],
+    homework:['📥 Гэрийн даалгавар',()=>{state.view='parentView';state.assessTab='homework';}]
+  };
+  const items = Object.entries(n).filter(([k,v])=>v>0);
+  return `
+    <div style="background:linear-gradient(135deg,#fef3c7,#fed7aa,#fecaca);border-left:6px solid #f59e0b;border-radius:14px;padding:16px 20px;margin-bottom:20px;box-shadow:0 4px 14px rgba(245,158,11,0.2)">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+        <div style="font-weight:700;font-size:15px;color:#7c2d12">🔔 ${total} шинэ мэдэгдэл</div>
+        <button class="btn btn-sm btn-secondary" onclick="markAllSeen()">Бүгдийг харсан</button>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${items.map(([k,v])=>`
+          <button onclick="notifClick('${k}')" style="background:white;border:2px solid #f59e0b;padding:6px 12px;border-radius:20px;cursor:pointer;font-size:13px;font-weight:600;color:#7c2d12">
+            ${labels[k][0]} <span style="background:#dc2626;color:white;padding:2px 8px;border-radius:10px;margin-left:4px">${v}</span>
+          </button>`).join("")}
+      </div>
+    </div>`;
+}
+function notifClick(k) {
+  markSeen(k);
+  const map = {tasks:'tasks',methodist_notes:'methodist',announcements:'announcements',messages:state.role==='teacher'?'messagesGroups':'chat',feedback:'assessGroups',activities:state.role==='parent'?'activities':'activityGroups',homework:'parentView'};
+  if (k === 'activities' && state.role === 'parent') {
+    const g = GROUPS.find(gr=>(CHILDREN[gr.id]||[]).some(c=>c.id===state.parentChildId));
+    if (g) { state.actGroup = g.id; state.view = 'activities'; render(); return; }
+  }
+  if (k === 'homework') { state.view='parentView'; state.assessTab='homework'; render(); return; }
+  state.view = map[k]; render();
+}
+function markAllSeen() {
+  for (const k in NOTIF_KEYS) markSeen(k);
+  LAST_NOTIF_STATE = computeNotifs();
+  render();
+}
 function renderHome() {
   const totalChildren = Object.values(CHILDREN).reduce((s,arr)=>s+arr.length,0);
   const totalLessons = Object.values(LESSONS).reduce((s,g)=>s+Object.values(g).reduce((ss,arr)=>ss+arr.length,0),0);
+  const n = computeNotifs();
+  const badge = (k) => n[k]>0 ? `<span style="position:absolute;top:8px;right:8px;background:#dc2626;color:white;padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;min-width:22px;text-align:center;box-shadow:0 2px 6px rgba(220,38,38,0.4)">${n[k]}</span>`:'';
   return `
+    ${renderNotifBanner()}
     <div style="text-align:center;padding:32px 20px 20px;background:linear-gradient(135deg,#fbcfe8 0%,#c7d2fe 35%,#a5f3fc 70%,#bbf7d0 100%);border-radius:24px;margin-bottom:28px;position:relative;overflow:hidden;box-shadow:0 8px 30px rgba(139,92,246,0.15)">
       <div style="position:absolute;top:10px;left:20px;font-size:32px;opacity:0.6">🎈</div>
       <div style="position:absolute;top:20px;right:30px;font-size:28px;opacity:0.6">🌈</div>
@@ -579,7 +696,8 @@ function renderHome() {
       <div class="card c2" onclick="state.view='planGroups';render()">
         <span class="element-icon">📋</span><h3>Хөтөлбөр төлөвлөгөө</h3>
         <p>📆 Жилийн, сарын, ээлжит төлөвлөгөө</p></div>
-      <div class="card c3" onclick="state.view='tasks';render()">
+      <div class="card c3" style="position:relative" onclick="state.view='tasks';render()">
+        ${badge('tasks')}
         <span class="element-icon">📌</span><h3>Үүрэг даалгаврын биелэлт</h3>
         <p>🗂 Ажлын хэсэг, гүйцэтгэлийн тайлан</p></div>
       <div class="card c4" onclick="state.view='assessGroups';render()">
@@ -588,19 +706,22 @@ function renderHome() {
       <div class="card c5" onclick="state.view='instruments';render()">
         <span class="element-icon">🎺</span><h3>Хөгжмийн зэмсгийн каталог</h3>
         <p>🥁🎹🎸 32 хөгжмийн зэмсэг</p></div>
-      <div class="card c6" onclick="state.view='attendanceGroups';render()">
-        <span class="element-icon">✅</span><h3>Хичээлийн ирц</h3>
-        <p>📝 Өдөр тутмын ирц бүртгэл</p></div>
+      <div class="card c6" onclick="state.view='activityGroups';render()">
+        <span class="element-icon">📸</span><h3>Сургалт, үйл ажиллагаа</h3>
+        <p>📝 Хичээлийн зураг, бичлэг, тэмдэглэл</p></div>
       <div class="card c7" onclick="state.view='events';render()">
         <span class="element-icon">🎭</span><h3>Тайлант тоглолт, өдөрлөг</h3>
         <p>🎪🎊 Арга хэмжээний бэлтгэл</p></div>
-      <div class="card c8" onclick="state.view='messagesGroups';render()">
+      <div class="card c8" style="position:relative" onclick="state.view='messagesGroups';render()">
+        ${badge('messages')}
         <span class="element-icon">💬</span><h3>Эцэг эхтэй харилцах</h3>
         <p>💌 Хүүхэд тус бүрд зурвас илгээх</p></div>
-      <div class="card c9" onclick="state.view='announcements';render()">
+      <div class="card c9" style="position:relative" onclick="state.view='announcements';render()">
+        ${badge('announcements')}
         <span class="element-icon">📢</span><h3>Зар мэдээ, үйл ажиллагаа</h3>
         <p>🌟 Бүх эцэг эхэд харагдана</p></div>
-      <div class="card c10" onclick="state.view='methodist';render()">
+      <div class="card c10" style="position:relative" onclick="state.view='methodist';render()">
+        ${badge('methodist_notes')}
         <span class="element-icon">👔</span><h3>Арга зүйч, эрхлэгч</h3>
         <p>📖 Хяналт, зөвлөгөө, заавар</p></div>
       <div class="card c1" onclick="state.view='diary';render()">
@@ -1800,6 +1921,124 @@ async function toggleCriterion(childId, level, num) {
   }
   await loadAll(); render();
 }
+// ============ ACTIVITIES (СУРГАЛТ, ҮЙЛ АЖИЛЛАГАА) ============
+function renderActivityGroups() {
+  const isTeacher = state.role === 'teacher';
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Сургалт, үйл ажиллагаа</span></div>
+    <h2 class="section">📸 Сургалт, үйл ажиллагаа</h2>
+    <p class="section-desc">Бүлгээ сонгоно уу — тухайн бүлгийн хичээлийн зураг, бичлэг, тэмдэглэл харагдана</p>
+    <div class="grid">
+      ${GROUPS.map(g => {
+        const cnt = (ACTIVITIES[g.id]||[]).length;
+        return `
+        <div class="card" onclick="state.actGroup='${g.id}';state.view='activities';render()">
+          <h3>${g.name}</h3><p>${g.age}</p>
+          <span class="badge">📸 ${cnt} бичлэг</span>
+        </div>`;
+      }).join("")}
+    </div>`;
+}
+function renderActivities() {
+  const isTeacher = state.role === 'teacher';
+  const isMethodist = state.role === 'methodist';
+  const isParent = state.role === 'parent';
+  const g = GROUPS.find(x => x.id === state.actGroup);
+  const items = ACTIVITIES[state.actGroup] || [];
+  const backTo = isParent ? "state.view='parentView';render()" : "state.view='activityGroups';render()";
+  return `
+    <div class="breadcrumb">
+      <a onclick="goHome()">Нүүр</a><span class="sep">›</span>
+      <a onclick="${backTo}">Сургалт, үйл ажиллагаа</a><span class="sep">›</span>
+      <span>${g.name}</span>
+    </div>
+    <div class="toolbar">
+      <div><h2 class="section">📸 ${g.name} — Сургалт, үйл ажиллагаа</h2>
+        <p class="section-desc" style="margin:0">${items.length} бичлэг · Багшийн тэмдэглэл, хичээлийн зураг, бичлэг</p></div>
+      ${isTeacher?`<button class="btn" onclick="openActivityModal()">➕ Шинэ бичлэг</button>`:''}
+    </div>
+    ${items.length===0?`<div class="empty">Одоохондоо бичлэг байхгүй байна</div>`:
+    `<div class="lesson-list">${items.map(a=>`
+      <div class="lesson-item">
+        <div class="info">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:6px;flex-wrap:wrap">
+            <span style="background:linear-gradient(135deg,#fce7f3,#ddd6fe);padding:3px 12px;border-radius:8px;font-size:12px;font-weight:600">📅 ${a.activity_date}</span>
+          </div>
+          ${a.title?`<h4>${escapeHTML(a.title)}</h4>`:''}
+          ${a.note?`<div style="margin-top:6px;white-space:pre-wrap;font-size:14px">${escapeHTML(a.note)}</div>`:''}
+          ${a.media && a.media.length?`<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-top:12px">${a.media.map(m=>{
+            if (m.type==='video') return `<video src="${escapeAttr(m.src)}" controls style="width:100%;border-radius:10px;background:#000"></video>`;
+            return `<img src="${escapeAttr(m.src)}" style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:10px;cursor:pointer" onclick="window.open('${escapeAttr(m.src)}','_blank')">`;
+          }).join("")}</div>`:''}
+          ${a.files && a.files.length?`<div style="display:flex;flex-direction:column;gap:6px;margin-top:10px">
+            ${a.files.map(f=>`<a href="${escapeAttr(f.src)}" target="_blank" style="padding:6px 10px;background:var(--bg);border-radius:6px;text-decoration:none;color:var(--accent);font-size:12px">📎 ${escapeHTML(f.label||f.src)}</a>`).join("")}
+          </div>`:''}
+        </div>
+        ${isTeacher?`<div class="actions">
+          <button class="btn btn-secondary btn-sm" onclick="openActivityModal('${a.id}')">Засах</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteActivity('${a.id}')">Устгах</button>
+        </div>`:''}
+      </div>`).join("")}</div>`}`;
+}
+function openActivityModal(id) {
+  const a = id ? (ACTIVITIES[state.actGroup]||[]).find(x=>x.id===id) : null;
+  const today = new Date().toISOString().substring(0,10);
+  showModal(`
+    <h3>${a?"✏️ Засах":"📸 Шинэ бичлэг"}</h3>
+    <form onsubmit="return saveActivity(event,'${id||''}')">
+      <div class="form-group"><label>📅 Огноо</label>
+        <input class="input" id="ac-date" type="date" required value="${a?a.activity_date:today}"></div>
+      <div class="form-group"><label>📝 Гарчиг (заавал биш)</label>
+        <input class="input" id="ac-title" value="${a?escapeAttr(a.title||''):''}" placeholder="Ж: 'Төрийн дуулал' заасан хичээл"></div>
+      <div class="form-group"><label>💭 Багшийн тэмдэглэл</label>
+        <textarea class="input" id="ac-note" style="min-height:120px" placeholder="Өнөөдөр яаж өнгөрсөн, ямар үр дүнтэй, хүүхдүүд яаж хүлээж авсан...">${a?escapeHTML(a.note||''):''}</textarea></div>
+      <div class="form-group"><label>🖼 Зураг / бичлэг (олон файл)</label>
+        <input class="input" id="ac-media" type="file" accept="image/*,video/*" multiple></div>
+      <div class="form-group"><label>📎 Файл (заавал биш)</label>
+        <input class="input" id="ac-files" type="file" multiple></div>
+      ${a && (a.media?.length || a.files?.length) ? `
+        <div class="form-group"><label>Одоо байгаа файлууд</label>
+          ${(a.media||[]).map(m=>`<div style="font-size:12px;padding:4px;color:var(--muted)">🖼 ${escapeHTML(m.label||m.src)}</div>`).join("")}
+          ${(a.files||[]).map(f=>`<div style="font-size:12px;padding:4px;color:var(--muted)">📎 ${escapeHTML(f.label||f.src)}</div>`).join("")}
+        </div>`:''}
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="ac-save">💾 Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveActivity(e, id) {
+  e.preventDefault();
+  const btn = document.getElementById("ac-save"); btn.disabled=true; btn.textContent="⏳ Хуулж байна...";
+  const existing = id ? (ACTIVITIES[state.actGroup]||[]).find(x=>x.id===id) : null;
+  const media = existing ? [...(existing.media||[])] : [];
+  const files = existing ? [...(existing.files||[])] : [];
+  for (const f of document.getElementById("ac-media").files) {
+    const src = await uploadFile(f);
+    if (src) media.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  for (const f of document.getElementById("ac-files").files) {
+    const src = await uploadFile(f);
+    if (src) files.push({ src, label: f.name });
+  }
+  const data = {
+    group_id: state.actGroup,
+    activity_date: document.getElementById("ac-date").value,
+    title: document.getElementById("ac-title").value.trim(),
+    note: document.getElementById("ac-note").value.trim(),
+    media, files
+  };
+  if (id) await sb.from('activities').update(data).eq('id', id);
+  else await sb.from('activities').insert(data);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+async function deleteActivity(id) {
+  if (!confirm("Устгах уу?")) return;
+  await sb.from('activities').delete().eq('id', id);
+  await loadAll(); render();
+}
+
 // ============ PORTFOLIO (БАГШИЙН ТАНИЛЦУУЛГА) ============
 function renderPortfolio() {
   const isTeacher = state.role === 'teacher';
@@ -1889,12 +2128,22 @@ function renderPortfolio() {
       </div>`)}
 
     <!-- PUBLICATIONS -->
-    ${renderPortfolioSection('publications', '📖 Хэвлүүлсэн ном, өгүүлэл', p.publications, isTeacher, (pub)=>`
-      <div style="border:1px solid var(--border);padding:12px;border-radius:10px;margin-bottom:8px">
+    ${renderPortfolioSection('publications', '📖 Багшийн хийсэн ном, гарын авлага, арга зүйн сан, илтгэл, эрдэм шинжилгээ, судалгааны ажил', p.publications, isTeacher, (pub)=>{
+      const typeIcons = {'Ном':'📚','Гарын авлага':'📘','Арга зүйн сан':'🗂','Илтгэл':'🎤','Судалгааны ажил':'🔬','Бусад':'📄'};
+      const ico = typeIcons[pub.type]||'📄';
+      const bg = pub.type==='Ном'?'#fef3c7':pub.type==='Гарын авлага'?'#dbeafe':pub.type==='Арга зүйн сан'?'#dcfce7':pub.type==='Илтгэл'?'#fce7f3':pub.type==='Судалгааны ажил'?'#ede9fe':'#f9fafb';
+      return `
+      <div style="border:1px solid var(--border);padding:12px;border-radius:10px;margin-bottom:8px;background:${bg}">
+        <div style="display:flex;gap:8px;align-items:center;margin-bottom:4px">
+          <span style="font-size:22px">${ico}</span>
+          ${pub.type?`<span style="background:white;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600">${escapeHTML(pub.type)}</span>`:''}
+        </div>
         <div style="font-weight:600">${escapeHTML(pub.title||'')}</div>
-        <div style="font-size:12px;color:var(--muted)">${escapeHTML(pub.year||'')} · ${escapeHTML(pub.publisher||'')}</div>
-        ${pub.link?`<a href="${escapeAttr(pub.link)}" target="_blank" style="font-size:12px;color:var(--accent)">🔗 Үзэх</a>`:''}
-      </div>`)}
+        <div style="font-size:12px;color:var(--muted)">${escapeHTML(pub.year||'')} ${pub.publisher?'· '+escapeHTML(pub.publisher):''}</div>
+        ${pub.description?`<div style="font-size:13px;margin-top:6px">${escapeHTML(pub.description)}</div>`:''}
+        ${pub.link?`<a href="${escapeAttr(pub.link)}" target="_blank" style="display:inline-block;margin-top:6px;font-size:12px;color:var(--accent);font-weight:600">🔗 Үзэх / татах</a>`:''}
+      </div>`;
+    })}
 
     <!-- TIMELINE -->
     ${renderPortfolioSection('timeline', '📅 Онцлох үйл ажиллагаа', p.timeline, isTeacher, (t)=>`
@@ -2003,11 +2252,11 @@ function openSectionEdit(key) {
     experience: [{k:'position',l:'Албан тушаал'},{k:'place',l:'Байгууллага'},{k:'years',l:'Хугацаа (ж: 2015-2020)'},{k:'description',l:'Тайлбар',t:'textarea'}],
     awards: [{k:'title',l:'Шагналын нэр'},{k:'year',l:'Он'},{k:'awarder',l:'Олгосон газар'},{k:'description',l:'Тайлбар',t:'textarea'}],
     trainings: [{k:'title',l:'Сургалтын нэр'},{k:'year',l:'Он'},{k:'hours',l:'Цаг'},{k:'organizer',l:'Зохион байгуулагч'}],
-    publications: [{k:'title',l:'Гарчиг'},{k:'year',l:'Он'},{k:'publisher',l:'Хэвлэн нийтлэгч'},{k:'link',l:'Линк'}],
+    publications: [{k:'type',l:'Төрөл (Ном / Гарын авлага / Арга зүйн сан / Илтгэл / Судалгааны ажил / Бусад)'},{k:'title',l:'Гарчиг'},{k:'year',l:'Он'},{k:'publisher',l:'Хэвлэн нийтлэгч / Байгууллага'},{k:'description',l:'Тайлбар',t:'textarea'},{k:'link',l:'Линк (Google Drive, Cloud г.м)'}],
     timeline: [{k:'date',l:'Огноо / Он'},{k:'title',l:'Гарчиг'},{k:'description',l:'Тайлбар',t:'textarea'}],
     testimonials: [{k:'text',l:'Санал',t:'textarea'},{k:'author',l:'Хэн бичсэн'}]
   };
-  const titles = {skills:'Ур чадвар',education:'Боловсрол',experience:'Ажлын түүх',awards:'Шагнал',trainings:'Сургалт',publications:'Хэвлэл',timeline:'Үйл ажиллагаа',testimonials:'Талархал'};
+  const titles = {skills:'Ур чадвар',education:'Боловсрол',experience:'Ажлын түүх',awards:'Шагнал',trainings:'Сургалт',publications:'Ном, гарын авлага, судалгаа',timeline:'Үйл ажиллагаа',testimonials:'Талархал'};
   const schema = schemas[key];
   const list = items.map((item,i) => `
     <div style="border:1px solid var(--border);padding:12px;border-radius:8px;margin-bottom:10px;background:var(--bg)">
@@ -2033,7 +2282,7 @@ function addSectionItem(key) {
     experience: [{k:'position',l:'Албан тушаал'},{k:'place',l:'Байгууллага'},{k:'years',l:'Хугацаа'},{k:'description',l:'Тайлбар',t:'textarea'}],
     awards: [{k:'title',l:'Шагналын нэр'},{k:'year',l:'Он'},{k:'awarder',l:'Олгосон газар'},{k:'description',l:'Тайлбар',t:'textarea'}],
     trainings: [{k:'title',l:'Сургалтын нэр'},{k:'year',l:'Он'},{k:'hours',l:'Цаг'},{k:'organizer',l:'Зохион байгуулагч'}],
-    publications: [{k:'title',l:'Гарчиг'},{k:'year',l:'Он'},{k:'publisher',l:'Хэвлэн нийтлэгч'},{k:'link',l:'Линк'}],
+    publications: [{k:'type',l:'Төрөл (Ном / Гарын авлага / Арга зүйн сан / Илтгэл / Судалгааны ажил / Бусад)'},{k:'title',l:'Гарчиг'},{k:'year',l:'Он'},{k:'publisher',l:'Хэвлэн нийтлэгч / Байгууллага'},{k:'description',l:'Тайлбар',t:'textarea'},{k:'link',l:'Линк (Google Drive, Cloud г.м)'}],
     timeline: [{k:'date',l:'Огноо / Он'},{k:'title',l:'Гарчиг'},{k:'description',l:'Тайлбар',t:'textarea'}],
     testimonials: [{k:'text',l:'Санал',t:'textarea'},{k:'author',l:'Хэн бичсэн'}]
   };
@@ -2699,6 +2948,7 @@ function renderMethodistHome() {
   const approvedCount = allPlans.filter(p => p.approved_at).length;
   const tabLabel = { yearly:"Жилийн", monthly:"Сарын", lesson:"Ээлжит" };
   return `
+    ${renderNotifBanner()}
     <div style="text-align:center;padding:24px 20px;background:linear-gradient(135deg,#fef3c7,#fed7aa,#fbcfe8);border-radius:20px;margin-bottom:24px">
       <div style="font-size:48px">🎓</div>
       <h2 style="font-size:22px;font-weight:800;margin:8px 0">Арга зүйч: ${escapeHTML(state.methodistName)}</h2>
@@ -3656,15 +3906,26 @@ function renderParentView() {
   const child = getChild(state.parentChildId);
   if (!child) return `<div class="empty">Хүүхдийн мэдээлэл олдсонгүй.</div>`;
   state.assessChild = child.id;
+  const notifBanner = renderNotifBanner();
   const pinned = ANNOUNCEMENTS.filter(a => a.pinned).slice(0,2);
-  const banner = `
-    <div style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;padding:14px 18px;border-radius:12px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;cursor:pointer" onclick="state.view='announcements';render()">
-      <div>
-        <div style="font-weight:600">📢 Зар мэдээ, өдөр тутмын үйл ажиллагаа</div>
+  const g = GROUPS.find(gr => (CHILDREN[gr.id]||[]).some(c => c.id === child.id));
+  const banner = notifBanner + `
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:16px">
+      <div style="background:linear-gradient(135deg,#3b82f6,#8b5cf6);color:white;padding:14px 18px;border-radius:12px;cursor:pointer" onclick="state.view='announcements';render()">
+        <div style="font-weight:600">📢 Зар мэдээ, үйл ажиллагаа</div>
         <div style="font-size:12px;opacity:0.9;margin-top:2px">Цэцэрлэгийн бүх мэдээллийг нэг дор</div>
         ${pinned.length?pinned.map(a=>`<div style="font-size:12px;opacity:0.9;margin-top:6px">📌 ${escapeHTML(a.title)}</div>`).join(""):''}
       </div>
-      <button class="btn btn-sm" style="background:white;color:#3b82f6;border:none">Нээх →</button>
+      ${g?`
+        <div style="background:linear-gradient(135deg,#ec4899,#f59e0b);color:white;padding:14px 18px;border-radius:12px;cursor:pointer" onclick="state.actGroup='${g.id}';state.view='activities';render()">
+          <div style="font-weight:600">📸 ${g.name} — Сургалт, үйл ажиллагаа</div>
+          <div style="font-size:12px;opacity:0.9;margin-top:2px">Хичээлийн зураг, бичлэг, тэмдэглэл</div>
+          <div style="font-size:12px;opacity:0.9;margin-top:6px">${(ACTIVITIES[g.id]||[]).length} бичлэг</div>
+        </div>`:''}
+      <div style="background:linear-gradient(135deg,#10b981,#059669);color:white;padding:14px 18px;border-radius:12px;cursor:pointer" onclick="state.view='portfolio';render()">
+        <div style="font-weight:600">👤 Багшийн танилцуулга</div>
+        <div style="font-size:12px;opacity:0.9;margin-top:2px">Портфолио, боловсрол, туршлага</div>
+      </div>
     </div>`;
   return banner + renderAssessChild(true);
 }

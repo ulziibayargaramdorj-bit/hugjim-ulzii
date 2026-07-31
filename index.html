@@ -541,6 +541,7 @@ function render() {
   else if (state.view === "portfolio") body = renderPortfolio();
   else if (state.view === "activityGroups") body = renderActivityGroups();
   else if (state.view === "activities") body = renderActivities();
+  else if (state.view === "monthlyReport") body = renderMonthlyReport();
   else if (state.view === "summary") body = renderSummary();
   else if (state.view === "assessGroups") body = renderAssessGroups();
   else if (state.view === "assessChildren") body = renderAssessChildren();
@@ -709,6 +710,9 @@ function renderHome() {
       <div class="card c6" onclick="state.view='activityGroups';render()">
         <span class="element-icon">📸</span><h3>Сургалт, үйл ажиллагаа</h3>
         <p>📝 Хичээлийн зураг, бичлэг, тэмдэглэл</p></div>
+      <div class="card c3" onclick="state.view='monthlyReport';render()">
+        <span class="element-icon">📊</span><h3>Сарын тайлан</h3>
+        <p>📅 Автомат нэгтгэсэн тайлан PDF</p></div>
       <div class="card c7" onclick="state.view='events';render()">
         <span class="element-icon">🎭</span><h3>Тайлант тоглолт, өдөрлөг</h3>
         <p>🎪🎊 Арга хэмжээний бэлтгэл</p></div>
@@ -1921,6 +1925,240 @@ async function toggleCriterion(childId, level, num) {
   }
   await loadAll(); render();
 }
+// ============ MONTHLY REPORT (САРЫН ТАЙЛАН) ============
+function renderMonthlyReport() {
+  const now = new Date();
+  const y = state.repYear || now.getFullYear();
+  const m = state.repMonth != null ? state.repMonth : now.getMonth();
+  const gid = state.repGroup || 'baga';
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Сарын тайлан</span></div>
+    <h2 class="section">📊 Автомат сарын тайлан</h2>
+    <p class="section-desc">Сар, бүлгээ сонгоод "Тайлан үүсгэх" дар — бүх мэдээлэл автомат нэгтгэгдэнэ</p>
+    <div style="background:white;padding:20px;border-radius:16px;box-shadow:var(--shadow);margin-bottom:20px">
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:14px">
+        <div class="form-group" style="margin:0"><label>📅 Сар</label>
+          <select class="input" onchange="state.repMonth=parseInt(this.value);render()">
+            ${["1-р сар","2-р сар","3-р сар","4-р сар","5-р сар","6-р сар","7-р сар","8-р сар","9-р сар","10-р сар","11-р сар","12-р сар"].map((n,i)=>`<option value="${i}" ${m===i?'selected':''}>${n}</option>`).join("")}
+          </select></div>
+        <div class="form-group" style="margin:0"><label>📆 Он</label>
+          <select class="input" onchange="state.repYear=parseInt(this.value);render()">
+            ${[2025,2026,2027].map(yy=>`<option value="${yy}" ${y===yy?'selected':''}>${yy}</option>`).join("")}
+          </select></div>
+        <div class="form-group" style="margin:0"><label>👥 Бүлэг</label>
+          <select class="input" onchange="state.repGroup=this.value;render()">
+            ${GROUPS.map(gg=>`<option value="${gg.id}" ${gid===gg.id?'selected':''}>${gg.name}</option>`).join("")}
+          </select></div>
+      </div>
+      <button class="btn" style="width:100%;padding:14px" onclick="generateMonthlyReport(${y},${m},'${gid}')">📄 Тайлан үүсгэх</button>
+    </div>
+    <div style="background:#eff6ff;padding:14px 18px;border-radius:12px;font-size:13px;color:#1e40af">
+      💡 <strong>Тайланд орох мэдээлэл:</strong><br>
+      · Бүлгийн ерөнхий мэдээлэл, хүүхдийн жагсаалт<br>
+      · Тухайн сард төлөвлөсөн болон хийсэн хичээлүүд<br>
+      · Хийсэн сургалт, үйл ажиллагаа (зураг, бичлэг, тэмдэглэлтэй)<br>
+      · Батласан төлөвлөгөөний тоо<br>
+      · Хүүхэд бүрийн ерөнхий болон хөгжмийн шалгуурын явц (%)<br>
+      · Гарсан ололт<br>
+      · Дуусгасан үүргүүд<br>
+      · Тухайн сарын зар мэдээ<br>
+      · Эцэг эхийн санал хүсэлт
+    </div>`;
+}
+function generateMonthlyReport(year, month, groupId) {
+  const g = GROUPS.find(x=>x.id===groupId);
+  const children = CHILDREN[groupId] || [];
+  const monthName = ["1-р сар","2-р сар","3-р сар","4-р сар","5-р сар","6-р сар","7-р сар","8-р сар","9-р сар","10-р сар","11-р сар","12-р сар"][month];
+  const inMonth = (dateStr) => {
+    if (!dateStr) return false;
+    const d = new Date(dateStr);
+    return d.getFullYear() === year && d.getMonth() === month;
+  };
+  const groupToLevel = { baga:1, dund:2, ahlah:3, beltgel:4, duguilan:1 };
+  const level = groupToLevel[groupId] || 1;
+
+  // Plans for this group in this month
+  const monthPlans = [];
+  ['yearly','monthly','lesson'].forEach(t => {
+    (PLANS[groupId] && PLANS[groupId][t]||[]).forEach(p => {
+      if (inMonth(p.created_at)) monthPlans.push({...p, _tab:t});
+    });
+  });
+  const approvedPlans = monthPlans.filter(p => p.approved_at).length;
+
+  // Activities
+  const activities = (ACTIVITIES[groupId]||[]).filter(a => inMonth(a.activity_date));
+
+  // Achievements per child
+  const monthAchievements = [];
+  children.forEach(c => {
+    (ACHIEVEMENTS[c.id]||[]).forEach(a => {
+      if (inMonth(a.earned_at)) monthAchievements.push({...a, child_name: c.name});
+    });
+  });
+
+  // Tasks completed in month
+  const doneTasks = TASKS.filter(t => t.completion_pct === 100 && inMonth(t.created_at));
+
+  // Announcements
+  const monthAnns = ANNOUNCEMENTS.filter(a => inMonth(a.created_at));
+
+  // Feedback per child in this group
+  const monthFB = [];
+  children.forEach(c => {
+    (FEEDBACK[c.id]||[]).forEach(f => {
+      if (inMonth(f.created_at)) monthFB.push({...f, child_name: c.name});
+    });
+  });
+
+  // Per-child criteria %
+  const childStats = children.map(c => {
+    const gc = CRITERIA_CHECKS[c.id] || {};
+    const cats = CRITERIA[level];
+    let n=0, done=0;
+    Object.values(cats).forEach(arr => arr.forEach(()=>{ n++; }));
+    for (let k=1; k<=n; k++) if (gc[level+"-"+k]?.checked) done++;
+    const gPct = n?Math.round(done/n*100):0;
+    const mc = MUSIC_CHECKS[c.id] || {};
+    const mcats = MUSIC_CRITERIA[level];
+    let total=0, score=0;
+    Object.entries(mcats).forEach(([cat,arr]) => arr.forEach((_,i) => {
+      total++;
+      const st = mc[level+"|"+cat+"|"+(i+1)]?.status;
+      if (st==='yes') score+=1; else if (st==='partial') score+=0.5;
+    }));
+    const mPct = total?Math.round(score/total*100):0;
+    return { name:c.name, avatar:c.avatar, gPct, mPct };
+  });
+
+  const html = `<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>${escapeHTML(g.name)} — ${monthName} ${year} тайлан</title>
+  <style>
+    @page { size: A4; margin: 15mm; }
+    body{font-family:"Times New Roman",serif;color:#000;line-height:1.5;font-size:11pt;max-width:210mm;margin:0 auto;padding:20px}
+    h1{font-size:18pt;text-align:center;background:linear-gradient(135deg,#be185d,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:6pt}
+    h2{font-size:14pt;text-align:center;color:#374151;margin-bottom:16pt}
+    h3{font-size:13pt;margin-top:20pt;color:#111;border-bottom:2pt solid #ec4899;padding-bottom:4pt}
+    .info{background:#faf5ff;padding:12pt 16pt;border-radius:8pt;margin:10pt 0}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10pt;margin:14pt 0}
+    .stat{background:linear-gradient(135deg,#fce7f3,#ddd6fe);padding:12pt;border-radius:8pt;text-align:center}
+    .stat .n{font-size:22pt;font-weight:700;color:#7c3aed}
+    .stat .l{font-size:10pt;color:#374151;margin-top:4pt}
+    table{width:100%;border-collapse:collapse;margin-top:10pt;font-size:10pt}
+    th,td{border:1px solid #d1d5db;padding:5pt 7pt;text-align:left}
+    th{background:#f3f4f6;font-weight:600}
+    .item{background:white;border:1px solid #e5e7eb;padding:10pt 14pt;border-radius:8pt;margin-bottom:8pt}
+    .item .date{font-size:10pt;color:#6b7280;margin-bottom:4pt}
+    .item .title{font-weight:600;margin-bottom:4pt}
+    .item .content{font-size:10pt;white-space:pre-wrap}
+    .badge{background:#d1fae5;color:#065f46;padding:2pt 8pt;border-radius:4pt;font-size:9pt;margin-left:6pt}
+    .toolbar{background:#111827;color:white;padding:12pt;text-align:center;border-radius:8pt;margin-bottom:20pt}
+    .toolbar button{background:#ec4899;color:white;border:none;padding:8pt 20pt;border-radius:6pt;cursor:pointer;font-size:11pt;margin:0 6pt}
+    .empty{color:#9ca3af;font-style:italic;padding:10pt;text-align:center}
+    .bar{height:10pt;background:#e5e7eb;border-radius:5pt;overflow:hidden;margin-top:3pt}
+    .bar>div{height:100%}
+    @media print { .toolbar{display:none} }
+  </style></head><body>
+  <div class="toolbar">
+    <button onclick="window.print()">🖨 Хэвлэх / PDF болгож татах</button>
+    <button onclick="downloadDoc()" style="background:#8b5cf6">📥 Word (.doc) татах</button>
+  </div>
+  <div id="content">
+    <h1>📊 САРЫН ТАЙЛАН</h1>
+    <h2>${escapeHTML(g.name)} · ${monthName} ${year}</h2>
+
+    <div class="info">
+      <strong>Бүлэг:</strong> ${escapeHTML(g.name)} · ${escapeHTML(g.level)} · ${escapeHTML(g.age)}<br>
+      <strong>Хугацаа:</strong> ${monthName} ${year}<br>
+      <strong>Тайлан гаргасан:</strong> ${new Date().toLocaleDateString('mn-MN')}
+    </div>
+
+    <div class="stats">
+      <div class="stat"><div class="n">${children.length}</div><div class="l">👥 Хүүхэд</div></div>
+      <div class="stat"><div class="n">${monthPlans.length}</div><div class="l">📚 Төлөвлөгөө</div></div>
+      <div class="stat"><div class="n">${approvedPlans}</div><div class="l">✅ Батласан</div></div>
+      <div class="stat"><div class="n">${activities.length}</div><div class="l">📸 Хичээл</div></div>
+    </div>
+
+    <h3>📊 Хүүхэд тус бүрийн явц</h3>
+    <table>
+      <thead><tr><th>№</th><th>Овог, нэр</th><th>Ерөнхий шалгуур</th><th>Хөгжмийн шалгуур</th></tr></thead>
+      <tbody>
+        ${childStats.map((s,i)=>`<tr>
+          <td>${i+1}</td>
+          <td>${escapeHTML(s.name)}</td>
+          <td>${s.gPct}%<div class="bar"><div style="width:${s.gPct}%;background:#10b981"></div></div></td>
+          <td>${s.mPct}%<div class="bar"><div style="width:${s.mPct}%;background:#3b82f6"></div></div></td>
+        </tr>`).join("")}
+      </tbody>
+    </table>
+
+    <h3>🎵 Ордсон хичээл, төлөвлөгөө</h3>
+    ${monthPlans.length ? monthPlans.map(p=>`
+      <div class="item">
+        <div class="date">${p.period||''} · ${p._tab==='yearly'?'Жилийн':p._tab==='monthly'?'Сарын':'Ээлжит'}${p.approved_at?'<span class="badge">✅ Батласан</span>':''}</div>
+        <div class="title">${escapeHTML(p.title)}</div>
+      </div>`).join("") : '<div class="empty">Тухайн сарын төлөвлөгөө байхгүй</div>'}
+
+    <h3>📸 Хийсэн сургалт, үйл ажиллагаа</h3>
+    ${activities.length ? activities.map(a=>`
+      <div class="item">
+        <div class="date">📅 ${a.activity_date}</div>
+        <div class="title">${escapeHTML(a.title||'—')}</div>
+        ${a.note?`<div class="content">${escapeHTML(a.note)}</div>`:''}
+        ${a.media && a.media.length?`<div style="font-size:9pt;color:#6b7280;margin-top:4pt">🖼 ${a.media.length} зураг/бичлэг</div>`:''}
+      </div>`).join("") : '<div class="empty">Хийсэн үйл ажиллагаа байхгүй</div>'}
+
+    <h3>🌟 Хүүхдийн ололт</h3>
+    ${monthAchievements.length ? `<table>
+      <thead><tr><th>Хүүхэд</th><th>Ололт</th><th>Огноо</th></tr></thead>
+      <tbody>${monthAchievements.map(a=>`<tr><td>${escapeHTML(a.child_name)}</td><td>${escapeHTML(a.icon||'🌟')} ${escapeHTML(a.title)}</td><td>${a.earned_at||''}</td></tr>`).join("")}</tbody>
+    </table>`:'<div class="empty">Ололт байхгүй</div>'}
+
+    <h3>📌 Дуусгасан үүрэг даалгавар</h3>
+    ${doneTasks.length ? doneTasks.map(t=>`
+      <div class="item">
+        <div class="date">${t.category||''}${t.approved_at?'<span class="badge">✅ Батласан</span>':''}</div>
+        <div class="title">${escapeHTML(t.title)}</div>
+      </div>`).join("") : '<div class="empty">Дуусгасан үүрэг байхгүй</div>'}
+
+    <h3>📢 Тухайн сарын зар мэдээ</h3>
+    ${monthAnns.length ? monthAnns.map(a=>`
+      <div class="item">
+        <div class="date">${new Date(a.created_at).toLocaleDateString('mn-MN')} · ${a.kind==='announcement'?'📣 Зар':'🎯 Үйл ажиллагаа'}</div>
+        <div class="title">${escapeHTML(a.title)}</div>
+        ${a.text?`<div class="content">${escapeHTML(a.text)}</div>`:''}
+      </div>`).join("") : '<div class="empty">Зар мэдээ байхгүй</div>'}
+
+    <h3>⭐ Эцэг эхийн санал хүсэлт</h3>
+    ${monthFB.length ? monthFB.map(f=>`
+      <div class="item">
+        <div class="date">${escapeHTML(f.child_name)} · ${f.kind==='praise'?'😊 Талархал':f.kind==='complaint'?'😟 Гомдол':f.kind==='question'?'❓ Асуулт':'💡 Санал'}</div>
+        <div class="content">${escapeHTML(f.text)}</div>
+        ${f.teacher_reply?`<div style="margin-top:6pt;padding:8pt;background:#f0fdf4;border-left:3pt solid #10b981;border-radius:4pt"><strong>Багшийн хариу:</strong> ${escapeHTML(f.teacher_reply)}</div>`:''}
+      </div>`).join("") : '<div class="empty">Санал хүсэлт байхгүй</div>'}
+
+    <div style="margin-top:30pt;padding-top:14pt;border-top:1pt solid #e5e7eb;text-align:right;font-size:10pt">
+      <div>ТАЙЛАН БОЛОВСРУУЛСАН: <strong>Хөгжмийн багш ..........................................</strong></div>
+      <div style="margin-top:14pt">БАТЛАВ: АРГА ЗҮЙЧ ..........................................</div>
+    </div>
+  </div>
+  <script>
+    function downloadDoc(){
+      const html='<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"></head><body>'+document.getElementById('content').outerHTML+'</body></html>';
+      const blob=new Blob(['\\ufeff'+html],{type:'application/msword;charset=utf-8'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');
+      a.href=url;a.download='${escapeHTML(g.name)}_${monthName}_${year}_тайлан.doc';a.click();
+      URL.revokeObjectURL(url);
+    }
+  <\/script>
+  </body></html>`;
+  const w = window.open("", "_blank");
+  w.document.write(html);
+  w.document.close();
+}
+
 // ============ ACTIVITIES (СУРГАЛТ, ҮЙЛ АЖИЛЛАГАА) ============
 function renderActivityGroups() {
   const isTeacher = state.role === 'teacher';

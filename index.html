@@ -291,13 +291,14 @@ let CAL_EVENTS = [];
 let SONG_LIB = [];
 let HOMEWORK = {}; // { childId: [rows] }
 let FEEDBACK = {}; // { childId: [rows] }
+let PROFILE = null;
 const MOOD_EMOJIS = ["😊 Гоё өдөр","😍 Маш сайхан","🙂 Хэвийн","😐 Тайван","😔 Ядруу","😤 Хэцүү","🎉 Баярт өдөр","💪 Идэвхтэй","🌈 Урам зоригтой"];
 const TASK_CATEGORIES = ["Заах аргын нэгдлийн үйл ажиллагаа","Хүүхэд хамгаалал","Дотоод хяналт","Ёс зүйн зөвлөл","ХАБ","Архивын үйл ажиллагаа","Өмч хамгаалал","Эд хөрөнгийн тооллого","Цахим хөгжил","Нээлттэй үйл ажиллагаа","Эрдэм шинжилгээний илтгэл судалгаа","Бусад"];
 const AVATAR_EMOJIS = ["👦","👧","🧒","👶","🐻","🐼","🐨","🐯","🦁","🐶","🐱","🐰","🐭","🦊","🐹","🦄","🐸","🐵","🦉","🦋","🌸","🌺","🌻","🌈","⭐","🌟","☀️","🌙","🍎","🍓","🍒","🍭","🎈","🎀","🎵","🎶","🎸","🥁","🎺","🎻"];
 
 // ============ DATA LAYER (Supabase) ============
 async function loadAll() {
-  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes, drRes, achRes, ceRes, slRes, hwRes, pfRes] = await Promise.all([
+  const [lRes, pRes, cRes, aRes, sRes, ccRes, inRes, atRes, evRes, msRes, mccRes, anRes, mnRes, tkRes, drRes, achRes, ceRes, slRes, hwRes, pfRes, tpRes] = await Promise.all([
     sb.from('lessons').select('*').order('created_at'),
     sb.from('plans').select('*').order('created_at'),
     sb.from('children').select('*').order('created_at'),
@@ -317,7 +318,8 @@ async function loadAll() {
     sb.from('calendar_events').select('*').order('event_date'),
     sb.from('song_library').select('*').order('kind').order('level').order('title'),
     sb.from('homework').select('*').order('created_at', {ascending:false}),
-    sb.from('parent_feedback').select('*').order('created_at', {ascending:false})
+    sb.from('parent_feedback').select('*').order('created_at', {ascending:false}),
+    sb.from('teacher_profile').select('*').limit(1).maybeSingle()
   ]);
   MUSIC_CHECKS = {};
   for (const m of (mccRes.data||[])) {
@@ -345,6 +347,7 @@ async function loadAll() {
     if (!FEEDBACK[f.child_id]) FEEDBACK[f.child_id] = [];
     FEEDBACK[f.child_id].push(f);
   }
+  PROFILE = (tpRes && tpRes.data) || null;
   ATTENDANCE = {};
   for (const a of (atRes.data||[])) {
     if (!ATTENDANCE[a.child_id]) ATTENDANCE[a.child_id] = {};
@@ -466,6 +469,7 @@ function render() {
   else if (state.view === "diary") body = renderDiary();
   else if (state.view === "calendar") body = renderCalendar();
   else if (state.view === "songlib") body = renderSongLib();
+  else if (state.view === "portfolio") body = renderPortfolio();
   else if (state.view === "summary") body = renderSummary();
   else if (state.view === "assessGroups") body = renderAssessGroups();
   else if (state.view === "assessChildren") body = renderAssessChildren();
@@ -569,9 +573,9 @@ function renderHome() {
       </div>
     </div>
     <div class="grid">
-      <div class="card c1" onclick="state.view='groups';render()">
-        <span class="element-icon">🎵</span><h3>Бүлгүүд ба Дугуйлан</h3>
-        <p>🎼 Хөгжмийн хичээлийн сэдэв, материалууд</p></div>
+      <div class="card c1" onclick="state.view='portfolio';render()">
+        <span class="element-icon">👤</span><h3>Багшийн танилцуулга</h3>
+        <p>📖 Портфолио, ажлын түүх, ур чадвар</p></div>
       <div class="card c2" onclick="state.view='planGroups';render()">
         <span class="element-icon">📋</span><h3>Хөтөлбөр төлөвлөгөө</h3>
         <p>📆 Жилийн, сарын, ээлжит төлөвлөгөө</p></div>
@@ -1796,6 +1800,297 @@ async function toggleCriterion(childId, level, num) {
   }
   await loadAll(); render();
 }
+// ============ PORTFOLIO (БАГШИЙН ТАНИЛЦУУЛГА) ============
+function renderPortfolio() {
+  const isTeacher = state.role === 'teacher';
+  const p = PROFILE || {};
+  const ytEmbedUrl = p.intro_video_url ? ytEmbed(p.intro_video_url) : null;
+  return `
+    <div class="breadcrumb"><a onclick="goHome()">Нүүр</a><span class="sep">›</span><span>Багшийн танилцуулга</span></div>
+    <!-- HERO -->
+    <div style="background:linear-gradient(135deg,#fce7f3,#ddd6fe,#bfdbfe);border-radius:24px;padding:32px;margin-bottom:20px;position:relative">
+      ${isTeacher?`<button class="btn btn-sm" style="position:absolute;top:14px;right:14px" onclick="openProfileEdit()">✏️ Засах</button>`:''}
+      <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+        <div style="flex-shrink:0">
+          ${p.photo_url?
+            `<img src="${escapeAttr(p.photo_url)}" style="width:150px;height:150px;border-radius:50%;object-fit:cover;box-shadow:0 8px 24px rgba(0,0,0,0.15);border:5px solid white">`:
+            `<div style="width:150px;height:150px;border-radius:50%;background:linear-gradient(135deg,#f9a8d4,#c084fc);display:flex;align-items:center;justify-content:center;font-size:72px;border:5px solid white;box-shadow:0 8px 24px rgba(0,0,0,0.15)">👩‍🏫</div>`}
+        </div>
+        <div style="flex:1;min-width:250px">
+          <h1 style="font-size:28px;font-weight:800;background:linear-gradient(135deg,#be185d,#7c3aed);-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:4px">${escapeHTML(p.name||'—')}</h1>
+          <div style="font-size:16px;color:#7c3aed;font-weight:600;margin-bottom:12px">🎵 ${escapeHTML(p.position||'Хөгжмийн багш')}</div>
+          ${p.bio?`<p style="font-size:14px;line-height:1.6;color:#334155">${escapeHTML(p.bio)}</p>`:''}
+          <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:12px;font-size:13px">
+            ${p.phone?`<a href="tel:${escapeAttr(p.phone)}" style="color:#7c3aed;text-decoration:none">☎️ ${escapeHTML(p.phone)}</a>`:''}
+            ${p.email?`<a href="mailto:${escapeAttr(p.email)}" style="color:#7c3aed;text-decoration:none">✉️ ${escapeHTML(p.email)}</a>`:''}
+          </div>
+        </div>
+      </div>
+      ${p.mission?`
+        <div style="margin-top:20px;padding:16px 20px;background:rgba(255,255,255,0.7);backdrop-filter:blur(6px);border-radius:14px;border-left:4px solid #ec4899">
+          <div style="font-size:11px;color:#be185d;font-weight:700;margin-bottom:4px">🎯 ЭРХЭМ ЗОРИЛГО</div>
+          <div style="font-size:14px;font-style:italic;color:#334155">"${escapeHTML(p.mission)}"</div>
+        </div>`:''}
+    </div>
+
+    ${ytEmbedUrl?`
+      <div style="margin-bottom:20px;background:white;border-radius:16px;padding:16px;box-shadow:var(--shadow)">
+        <h3 style="font-size:15px;margin-bottom:10px">🎥 Танил болцгооё</h3>
+        <div style="position:relative;padding-bottom:56.25%;height:0;border-radius:10px;overflow:hidden;background:#000">
+          <iframe src="${ytEmbedUrl}" style="position:absolute;top:0;left:0;width:100%;height:100%;border:none" allowfullscreen></iframe>
+        </div>
+      </div>`:''}
+
+    <!-- SKILLS -->
+    ${renderPortfolioSection('skills', '📊 Мэргэжлийн ур чадвар', p.skills, isTeacher, (s)=>`
+      <div style="margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px">
+          <span><strong>${escapeHTML(s.name||'')}</strong></span>
+          <span style="color:#7c3aed;font-weight:600">${s.level||0}%</span>
+        </div>
+        <div style="height:10px;background:var(--bg);border-radius:5px;overflow:hidden">
+          <div style="width:${s.level||0}%;height:100%;background:linear-gradient(90deg,#ec4899,#8b5cf6);transition:width 0.3s"></div>
+        </div>
+      </div>`)}
+
+    <!-- EDUCATION -->
+    ${renderPortfolioSection('education', '🎓 Боловсрол', p.education, isTeacher, (e)=>`
+      <div style="border-left:3px solid #ec4899;padding:8px 14px;margin-bottom:10px;background:#fdf2f8;border-radius:0 8px 8px 0">
+        <div style="font-weight:600">${escapeHTML(e.school||'')}</div>
+        <div style="font-size:13px;color:var(--muted)">${escapeHTML(e.degree||'')} · ${escapeHTML(e.year||'')}</div>
+      </div>`)}
+
+    <!-- EXPERIENCE -->
+    ${renderPortfolioSection('experience', '💼 Ажлын түүх', p.experience, isTeacher, (e)=>`
+      <div style="border-left:3px solid #8b5cf6;padding:8px 14px;margin-bottom:10px;background:#faf5ff;border-radius:0 8px 8px 0">
+        <div style="font-weight:600">${escapeHTML(e.position||'')} · ${escapeHTML(e.place||'')}</div>
+        <div style="font-size:13px;color:var(--muted)">${escapeHTML(e.years||'')}</div>
+        ${e.description?`<div style="font-size:12px;margin-top:4px">${escapeHTML(e.description)}</div>`:''}
+      </div>`)}
+
+    <!-- AWARDS -->
+    ${renderPortfolioSection('awards', '🏆 Шагнал, гавьяа', p.awards, isTeacher, (a)=>`
+      <div style="background:linear-gradient(135deg,#fef3c7,#fed7aa);padding:14px;border-radius:12px;margin-bottom:10px">
+        <div style="display:flex;gap:10px;align-items:center">
+          <div style="font-size:32px">🏆</div>
+          <div>
+            <div style="font-weight:600">${escapeHTML(a.title||'')}</div>
+            <div style="font-size:12px;color:#92400e">${escapeHTML(a.year||'')} · ${escapeHTML(a.awarder||'')}</div>
+          </div>
+        </div>
+        ${a.description?`<div style="font-size:12px;margin-top:6px">${escapeHTML(a.description)}</div>`:''}
+      </div>`)}
+
+    <!-- TRAININGS -->
+    ${renderPortfolioSection('trainings', '📚 Хамрагдсан сургалт', p.trainings, isTeacher, (t)=>`
+      <div style="background:#eff6ff;padding:10px 14px;border-radius:8px;margin-bottom:8px">
+        <div style="font-weight:600;font-size:13px">${escapeHTML(t.title||'')}</div>
+        <div style="font-size:12px;color:var(--muted)">${escapeHTML(t.year||'')} · ${escapeHTML(t.hours||'')} цаг · ${escapeHTML(t.organizer||'')}</div>
+      </div>`)}
+
+    <!-- PUBLICATIONS -->
+    ${renderPortfolioSection('publications', '📖 Хэвлүүлсэн ном, өгүүлэл', p.publications, isTeacher, (pub)=>`
+      <div style="border:1px solid var(--border);padding:12px;border-radius:10px;margin-bottom:8px">
+        <div style="font-weight:600">${escapeHTML(pub.title||'')}</div>
+        <div style="font-size:12px;color:var(--muted)">${escapeHTML(pub.year||'')} · ${escapeHTML(pub.publisher||'')}</div>
+        ${pub.link?`<a href="${escapeAttr(pub.link)}" target="_blank" style="font-size:12px;color:var(--accent)">🔗 Үзэх</a>`:''}
+      </div>`)}
+
+    <!-- TIMELINE -->
+    ${renderPortfolioSection('timeline', '📅 Онцлох үйл ажиллагаа', p.timeline, isTeacher, (t)=>`
+      <div style="display:flex;gap:14px;margin-bottom:12px">
+        <div style="min-width:70px;text-align:right;padding-top:2px">
+          <div style="font-weight:700;color:#ec4899">${escapeHTML(t.date||'')}</div>
+        </div>
+        <div style="border-left:3px solid #ec4899;padding-left:14px;flex:1">
+          <div style="font-weight:600">${escapeHTML(t.title||'')}</div>
+          ${t.description?`<div style="font-size:12px;color:var(--muted);margin-top:2px">${escapeHTML(t.description)}</div>`:''}
+        </div>
+      </div>`)}
+
+    <!-- TESTIMONIALS -->
+    ${renderPortfolioSection('testimonials', '⭐ Талархал, санал (Testimonials)', p.testimonials, isTeacher, (t)=>`
+      <div style="background:linear-gradient(135deg,#f0fdf4,#dcfce7);padding:14px;border-radius:12px;margin-bottom:10px">
+        <div style="font-style:italic;font-size:14px;color:#166534">"${escapeHTML(t.text||'')}"</div>
+        <div style="text-align:right;font-size:12px;color:#15803d;margin-top:6px">— ${escapeHTML(t.author||'')}</div>
+      </div>`)}
+
+    <!-- GALLERY -->
+    <div style="background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 style="font-size:16px;font-weight:700">🖼 Ажлын гэрэл зурган цомог</h3>
+        ${isTeacher?`<button class="btn btn-sm" onclick="openGalleryUpload()">➕ Зураг нэмэх</button>`:''}
+      </div>
+      ${p.gallery && p.gallery.length ?
+        `<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px">
+          ${p.gallery.map((m,i)=>`
+            <div style="position:relative;aspect-ratio:1;border-radius:10px;overflow:hidden;background:var(--bg)">
+              ${m.type==='video'?
+                `<video src="${escapeAttr(m.src)}" controls style="width:100%;height:100%;object-fit:cover"></video>`:
+                `<img src="${escapeAttr(m.src)}" style="width:100%;height:100%;object-fit:cover;cursor:pointer" onclick="window.open('${escapeAttr(m.src)}','_blank')">`}
+              ${isTeacher?`<button class="btn btn-danger btn-sm" style="position:absolute;top:4px;right:4px;padding:2px 8px;font-size:11px" onclick="deleteGalleryItem(${i})">✕</button>`:''}
+            </div>`).join("")}
+        </div>`:
+        `<div class="empty">Зураг байхгүй</div>`}
+    </div>`;
+}
+function renderPortfolioSection(key, title, items, isTeacher, itemRender) {
+  const list = items || [];
+  return `
+    <div style="background:white;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:var(--shadow)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <h3 style="font-size:16px;font-weight:700">${title}</h3>
+        ${isTeacher?`<button class="btn btn-sm" onclick="openSectionEdit('${key}')">➕ Нэмэх / засах</button>`:''}
+      </div>
+      ${list.length===0?`<div class="empty" style="padding:20px">Мэдээлэл байхгүй</div>`:list.map(itemRender).join("")}
+    </div>`;
+}
+function openProfileEdit() {
+  const p = PROFILE || {};
+  showModal(`
+    <h3>✏️ Ерөнхий мэдээлэл засах</h3>
+    <form onsubmit="return saveProfile(event)">
+      <div class="form-group"><label>👤 Овог, нэр</label>
+        <input class="input" id="pf-name" value="${escapeAttr(p.name||'')}"></div>
+      <div class="form-group"><label>💼 Албан тушаал</label>
+        <input class="input" id="pf-pos" value="${escapeAttr(p.position||'')}"></div>
+      <div class="form-group"><label>🖼 Профайл зураг</label>
+        ${p.photo_url?`<img src="${escapeAttr(p.photo_url)}" style="width:80px;height:80px;border-radius:50%;object-fit:cover;margin-bottom:8px">`:''}
+        <input class="input" id="pf-photo" type="file" accept="image/*"></div>
+      <div class="form-group"><label>🎥 "Танил болцгооё" видео (YouTube URL)</label>
+        <input class="input" id="pf-video" value="${escapeAttr(p.intro_video_url||'')}" placeholder="https://youtu.be/..."></div>
+      <div class="form-group"><label>📝 Товч танилцуулга</label>
+        <textarea class="input" id="pf-bio" style="min-height:100px">${escapeHTML(p.bio||'')}</textarea></div>
+      <div class="form-group"><label>🎯 Эрхэм зорилго</label>
+        <textarea class="input" id="pf-mission">${escapeHTML(p.mission||'')}</textarea></div>
+      <div class="form-group"><label>☎️ Утас</label>
+        <input class="input" id="pf-phone" value="${escapeAttr(p.phone||'')}"></div>
+      <div class="form-group"><label>✉️ Имэйл</label>
+        <input class="input" id="pf-email" value="${escapeAttr(p.email||'')}"></div>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Болих</button>
+        <button type="submit" class="btn" id="pf-save">💾 Хадгалах</button>
+      </div>
+    </form>`);
+}
+async function saveProfile(e) {
+  e.preventDefault();
+  const btn = document.getElementById("pf-save"); btn.disabled=true; btn.textContent="⏳...";
+  const file = document.getElementById("pf-photo").files[0];
+  let photo_url = PROFILE?.photo_url || null;
+  if (file) { const u = await uploadFile(file); if (u) photo_url = u; }
+  const data = {
+    name: document.getElementById("pf-name").value.trim(),
+    position: document.getElementById("pf-pos").value.trim(),
+    photo_url,
+    intro_video_url: document.getElementById("pf-video").value.trim() || null,
+    bio: document.getElementById("pf-bio").value.trim(),
+    mission: document.getElementById("pf-mission").value.trim(),
+    phone: document.getElementById("pf-phone").value.trim(),
+    email: document.getElementById("pf-email").value.trim()
+  };
+  if (PROFILE?.id) await sb.from('teacher_profile').update(data).eq('id', PROFILE.id);
+  else await sb.from('teacher_profile').insert(data);
+  await loadAll(); closeModal(); render();
+  return false;
+}
+function openSectionEdit(key) {
+  const p = PROFILE || {};
+  const items = p[key] || [];
+  const schemas = {
+    skills: [{k:'name',l:'Ур чадвар'},{k:'level',l:'Түвшин (0-100)',t:'number'}],
+    education: [{k:'school',l:'Сургууль'},{k:'degree',l:'Зэрэг'},{k:'year',l:'Он'}],
+    experience: [{k:'position',l:'Албан тушаал'},{k:'place',l:'Байгууллага'},{k:'years',l:'Хугацаа (ж: 2015-2020)'},{k:'description',l:'Тайлбар',t:'textarea'}],
+    awards: [{k:'title',l:'Шагналын нэр'},{k:'year',l:'Он'},{k:'awarder',l:'Олгосон газар'},{k:'description',l:'Тайлбар',t:'textarea'}],
+    trainings: [{k:'title',l:'Сургалтын нэр'},{k:'year',l:'Он'},{k:'hours',l:'Цаг'},{k:'organizer',l:'Зохион байгуулагч'}],
+    publications: [{k:'title',l:'Гарчиг'},{k:'year',l:'Он'},{k:'publisher',l:'Хэвлэн нийтлэгч'},{k:'link',l:'Линк'}],
+    timeline: [{k:'date',l:'Огноо / Он'},{k:'title',l:'Гарчиг'},{k:'description',l:'Тайлбар',t:'textarea'}],
+    testimonials: [{k:'text',l:'Санал',t:'textarea'},{k:'author',l:'Хэн бичсэн'}]
+  };
+  const titles = {skills:'Ур чадвар',education:'Боловсрол',experience:'Ажлын түүх',awards:'Шагнал',trainings:'Сургалт',publications:'Хэвлэл',timeline:'Үйл ажиллагаа',testimonials:'Талархал'};
+  const schema = schemas[key];
+  const list = items.map((item,i) => `
+    <div style="border:1px solid var(--border);padding:12px;border-radius:8px;margin-bottom:10px;background:var(--bg)">
+      ${schema.map(f => f.t==='textarea' ?
+        `<div class="form-group" style="margin-bottom:6px"><label style="font-size:11px">${f.l}</label><textarea class="input" data-i="${i}" data-k="${f.k}" style="min-height:50px">${escapeHTML(item[f.k]||'')}</textarea></div>`:
+        `<div class="form-group" style="margin-bottom:6px"><label style="font-size:11px">${f.l}</label><input class="input" data-i="${i}" data-k="${f.k}" type="${f.t||'text'}" value="${escapeAttr(item[f.k]||'')}"></div>`
+      ).join("")}
+      <button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕ Устгах</button>
+    </div>`).join("");
+  showModal(`
+    <h3>✏️ ${titles[key]||key}</h3>
+    <div id="ps-list">${list}</div>
+    <button class="btn btn-secondary btn-sm" onclick="addSectionItem('${key}')" type="button" style="margin-bottom:14px">➕ Мөр нэмэх</button>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Болих</button>
+      <button class="btn" onclick="saveSection('${key}')">💾 Хадгалах</button>
+    </div>`);
+}
+function addSectionItem(key) {
+  const schemas = {
+    skills: [{k:'name',l:'Ур чадвар'},{k:'level',l:'Түвшин (0-100)',t:'number'}],
+    education: [{k:'school',l:'Сургууль'},{k:'degree',l:'Зэрэг'},{k:'year',l:'Он'}],
+    experience: [{k:'position',l:'Албан тушаал'},{k:'place',l:'Байгууллага'},{k:'years',l:'Хугацаа'},{k:'description',l:'Тайлбар',t:'textarea'}],
+    awards: [{k:'title',l:'Шагналын нэр'},{k:'year',l:'Он'},{k:'awarder',l:'Олгосон газар'},{k:'description',l:'Тайлбар',t:'textarea'}],
+    trainings: [{k:'title',l:'Сургалтын нэр'},{k:'year',l:'Он'},{k:'hours',l:'Цаг'},{k:'organizer',l:'Зохион байгуулагч'}],
+    publications: [{k:'title',l:'Гарчиг'},{k:'year',l:'Он'},{k:'publisher',l:'Хэвлэн нийтлэгч'},{k:'link',l:'Линк'}],
+    timeline: [{k:'date',l:'Огноо / Он'},{k:'title',l:'Гарчиг'},{k:'description',l:'Тайлбар',t:'textarea'}],
+    testimonials: [{k:'text',l:'Санал',t:'textarea'},{k:'author',l:'Хэн бичсэн'}]
+  };
+  const list = document.getElementById("ps-list");
+  const i = list.querySelectorAll('[data-i]').length;
+  const schema = schemas[key];
+  const div = document.createElement("div");
+  div.style.cssText = "border:1px solid var(--border);padding:12px;border-radius:8px;margin-bottom:10px;background:var(--bg)";
+  div.innerHTML = schema.map(f => f.t==='textarea' ?
+    `<div class="form-group" style="margin-bottom:6px"><label style="font-size:11px">${f.l}</label><textarea class="input" data-i="${i}" data-k="${f.k}" style="min-height:50px"></textarea></div>`:
+    `<div class="form-group" style="margin-bottom:6px"><label style="font-size:11px">${f.l}</label><input class="input" data-i="${i}" data-k="${f.k}" type="${f.t||'text'}"></div>`
+  ).join("") + `<button type="button" class="btn btn-danger btn-sm" onclick="this.parentElement.remove()">✕ Устгах</button>`;
+  list.appendChild(div);
+}
+async function saveSection(key) {
+  const rows = {};
+  document.querySelectorAll("#ps-list [data-i]").forEach(el => {
+    const i = el.dataset.i, k = el.dataset.k;
+    if (!rows[i]) rows[i] = {};
+    const v = el.value.trim();
+    if (v) rows[i][k] = el.type === 'number' ? parseInt(v)||0 : v;
+  });
+  const items = Object.values(rows).filter(r => Object.keys(r).length);
+  const patch = {}; patch[key] = items;
+  if (PROFILE?.id) await sb.from('teacher_profile').update(patch).eq('id', PROFILE.id);
+  else await sb.from('teacher_profile').insert({...patch, name: 'Багш'});
+  await loadAll(); closeModal(); render();
+}
+function openGalleryUpload() {
+  showModal(`
+    <h3>🖼 Зураг нэмэх</h3>
+    <div class="form-group"><label>Зураг / бичлэг сонгох</label>
+      <input class="input" id="gu-file" type="file" accept="image/*,video/*" multiple></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Болих</button>
+      <button class="btn" id="gu-save" onclick="saveGalleryUpload()">📤 Оруулах</button>
+    </div>`);
+}
+async function saveGalleryUpload() {
+  const btn = document.getElementById("gu-save"); btn.disabled=true; btn.textContent="⏳ Хуулж байна...";
+  const gallery = [...(PROFILE?.gallery||[])];
+  for (const f of document.getElementById("gu-file").files) {
+    const src = await uploadFile(f);
+    if (src) gallery.push({ type: f.type.startsWith("video")?"video":"image", src, label: f.name });
+  }
+  if (PROFILE?.id) await sb.from('teacher_profile').update({gallery}).eq('id', PROFILE.id);
+  else await sb.from('teacher_profile').insert({name:'Багш', gallery});
+  await loadAll(); closeModal(); render();
+}
+async function deleteGalleryItem(idx) {
+  if (!confirm("Устгах уу?")) return;
+  const gallery = [...(PROFILE?.gallery||[])];
+  gallery.splice(idx, 1);
+  await sb.from('teacher_profile').update({gallery}).eq('id', PROFILE.id);
+  await loadAll(); render();
+}
+
 // ============ SONG LIBRARY (ДУУНЫ САН) ============
 function ytEmbed(url) {
   if (!url) return null;

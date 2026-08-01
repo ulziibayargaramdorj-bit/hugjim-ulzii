@@ -614,7 +614,7 @@ function goHome() { state.view = "home"; render(); }
 function goGroups() { state.view = "groups"; state.group = null; state.element = null; render(); }
 function goElements(gid) { state.group = gid; state.view = "elements"; render(); }
 function goLessons(elid) { state.element = elid; state.view = "lessons"; render(); }
-function goPlan(gid) { state.planGroup = gid; state.planTab = "yearly"; state.view = "plan"; render(); }
+function goPlan(gid) { state.planGroup = gid; state.planTab = gid === "duguilan" ? "yearly" : "lesson"; state.view = "plan"; render(); }
 
 // ============ HOME / GROUPS / ELEMENTS / LESSONS ============
 function renderNotifBanner() {
@@ -1043,8 +1043,7 @@ function renderPlan() {
   const g = GROUPS.find(x => x.id === state.planGroup);
   const p = PLANS[state.planGroup] || { yearly:[], monthly:[], lesson:[] };
   const isDuguilan = state.planGroup === 'duguilan';
-  const defaultTab = isDuguilan ? (state.planTab || 'yearly') : 'lesson';
-  const tab = defaultTab;
+  const tab = state.planTab || (isDuguilan ? 'yearly' : 'lesson');
   const tabs = isDuguilan ? [
     { id:"yearly", name:"🗓 Жилийн" },
     { id:"monthly", name:"📅 Сарын" },

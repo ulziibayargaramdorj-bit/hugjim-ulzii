@@ -48,14 +48,23 @@
 </style></head>
 <body>
 
+<div class="no-print" style="background:linear-gradient(135deg,#fef3c7,#fde68a);padding:14px 20px;border-radius:12px;margin-bottom:14px;border-left:5px solid #f59e0b">
+  <div style="font-size:14px;font-weight:700;color:#78350f;margin-bottom:6px">📌 Хадгалахын тулд 4 алхам:</div>
+  <div style="font-size:13px;color:#78350f;line-height:1.7">
+    <strong>1.</strong> Доод жагсаалтаас <strong>хүүхдээ сонгоно</strong> (гараар нэр оруулбал ололтод хадгалагдахгүй) →
+    <strong>2.</strong> Түвшин, төрөл, огноо сонго →
+    <strong>3.</strong> <strong>📝 Тайлбар засах</strong> — дууны нэр, ур чадвар бич →
+    <strong>4.</strong> Ногоон <strong>💾 Хадгалах</strong> товч дар
+  </div>
+</div>
 <div class="toolbar no-print">
-  <label>Хүүхэд системээс сонгох:
-    <select id="childSel" onchange="pickChild()" style="min-width:200px">
-      <option value="">— Гараар оруулна —</option>
+  <label style="background:#fef3c7;padding:6px 10px;border-radius:8px;border:2px solid #f59e0b"><strong>👦 Хүүхэд:</strong>
+    <select id="childSel" onchange="pickChild()" style="min-width:220px;font-weight:600">
+      <option value="">⚠️ Заавал сонгоно уу...</option>
     </select>
   </label>
-  <label>Эсвэл гараар:
-    <input id="name" value="Б. Тулга" style="width:180px" oninput="updateCert()">
+  <label>Гараар:
+    <input id="name" value="Б. Тулга" style="width:150px" oninput="updateCert()" title="Гараар оруулсан нэр зөвхөн хэвлэхэд харагдана">
   </label>
   <label>Түвшин:
     <select id="level" onchange="updateCert()">
@@ -76,11 +85,14 @@
     <input id="date" type="date" oninput="updateCert()">
   </label>
   <button class="primary" onclick="openReasonEditor()">📝 Тайлбар засах</button>
-  <span style="flex:1"></span>
-  <button class="print" onclick="window.print()">🖨 Хэвлэх / PDF</button>
-  <button class="dl" onclick="downloadAsWord()">📥 Word татах</button>
-  <button onclick="saveToChild()" style="background:#10b981;color:#fff;border:1px solid #10b981;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">💾 Хүүхдийн ололтод хадгалах</button>
 </div>
+<div class="no-print" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;padding:12px 16px;background:white;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.06)">
+  <button onclick="saveToChild()" style="background:linear-gradient(135deg,#10b981,#059669);color:#fff;border:none;padding:14px 24px;border-radius:10px;cursor:pointer;font-weight:700;font-size:15px;box-shadow:0 4px 12px rgba(16,185,129,0.3);animation:pulse 2s infinite">💾 Хүүхдийн ололтод хадгалах</button>
+  <span style="flex:1"></span>
+  <button class="print" onclick="window.print()" style="padding:12px 20px">🖨 Хэвлэх / PDF</button>
+  <button class="dl" onclick="downloadAsWord()" style="padding:12px 20px">📥 Word татах</button>
+</div>
+<style>@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}</style>
 
 <div class="cert-wrap">
 <div class="cert gold" id="cert">

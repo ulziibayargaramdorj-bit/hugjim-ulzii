@@ -50,7 +50,8 @@
   <button onclick="openEditor()" style="background:#ec4899;color:#fff;border-color:#ec4899">✏️ Засах</button>
   <button onclick="resetMonth()" style="background:#fff;color:#dc2626;border-color:#dc2626" title="Тухайн сарын өөрчлөлтийг цуцлаад автомат загварт эргүүлэх">↺ Автомат</button>
   <button class="print" onclick="window.print()">🖨 Хэвлэх / PDF</button>
-  <button class="dl" onclick="downloadDoc()">📥 Word (.doc) татах</button>
+  <button class="dl" onclick="downloadDoc()">📥 Word татах</button>
+  <button onclick="saveToSystem()" style="background:#10b981;color:#fff;border-color:#10b981">💾 Системд хадгалах</button>
 </div>
 
 <div id="plan"></div>
@@ -120,6 +121,34 @@ async function saveEditor() {
   await saveOverride(lvl, mon, data);
   document.querySelector("div[style*=fixed]").remove();
   render();
+}
+async function saveToSystem() {
+  const lvl = document.getElementById("lvl").value;
+  const mon = document.getElementById("mon").value;
+  const m = getMonthData(lvl, mon);
+  const groupMap = {1:'baga',2:'dund',3:'ahlah',4:'beltgel'};
+  const groupNames = {1:'Бага',2:'Дунд',3:'Ахлах',4:'Бэлтгэл'};
+  const gid = groupMap[lvl];
+  if (!confirm(`${groupNames[lvl]} бүлгийн ${mon}-р сарын төлөвлөгөөг системд хадгалах уу?\n\nАрга зүйч харах, батлах боломжтой болно.`)) return;
+  // Word файлыг Supabase Storage-т upload
+  const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"><style>' +
+    document.querySelector("style").innerText + '</style></head><body>' + document.getElementById("plan").outerHTML + '</body></html>';
+  const blob = new Blob(['﻿'+html], {type:'application/msword;charset=utf-8'});
+  const fname = `${Date.now()}-${gid}-${mon}сар.doc`;
+  const { error: upErr } = await sb.storage.from('media').upload(fname, blob);
+  if (upErr) { alert("Файл хадгалахад алдаа: "+upErr.message); return; }
+  const { data: {publicUrl} } = sb.storage.from('media').getPublicUrl(fname);
+  const content = `🎯 Гол сэдэв: ${m.theme}\n🎵 Шинэ дуу: ${m.newSong}\n🔁 Давтах дуу: ${m.repeatSong}\n👂 Сонсох хөгжим: ${m.listening}\n💃 Хөгжимт хөдөлгөөн: ${m.movement}\n🎮 Тоглоом: ${m.game}\n🥁 Хэмнэл: ${m.rhythm}\n🎤 Хоолойны дасгал: ${m.voiceExercise}`;
+  const { error: insErr } = await sb.from('plans').insert({
+    group_id: gid, tab: 'monthly',
+    title: `${groupNames[lvl]} бүлгийн ${mon}-р сарын төлөвлөгөө`,
+    period: `${mon}-р сар`,
+    goal: m.newCode,
+    content: content,
+    files: [{ src: publicUrl, label: `${groupNames[lvl]}_${mon}сар_төлөвлөгөө.doc` }]
+  });
+  if (insErr) { alert("Хадгалахад алдаа: "+insErr.message); return; }
+  alert(`✅ Амжилттай! Одоо системийн Хөтөлбөр төлөвлөгөө → ${groupNames[lvl]} бүлэг → Сарын tab-т орсон байгаа.\n\nАрга зүйч нэвтэрч батлах боломжтой боллоо.`);
 }
 async function resetMonth() {
   const lvl = document.getElementById("lvl").value;

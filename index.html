@@ -1071,13 +1071,11 @@ function renderPlan() {
   const g = GROUPS.find(x => x.id === state.planGroup);
   const p = PLANS[state.planGroup] || { yearly:[], monthly:[], lesson:[] };
   const isDuguilan = state.planGroup === 'duguilan';
-  const tab = state.planTab || (isDuguilan ? 'yearly' : 'lesson');
-  const tabs = isDuguilan ? [
+  const tab = state.planTab || 'lesson';
+  const tabs = [
     { id:"yearly", name:"🗓 Жилийн" },
     { id:"monthly", name:"📅 Сарын" },
-    { id:"lesson", name:"🎯 Ээлжит" }
-  ] : [
-    { id:"lesson", name:"Ээлжит хичээл" }
+    { id:"lesson", name:"🎯 Ээлжит хичээл" }
   ];
   const items = p[tab] || [];
   const tabsHTML = tabs.map(t => `
@@ -1123,9 +1121,10 @@ function renderPlan() {
     ${listHTML}`;
 }
 function renderPlanAutoBanner(gid, tab) {
-  if (gid === 'duguilan') return ''; // Дугуйлан бол автомат баннер харагдахгүй, зөвхөн файл оруулна
+  if (gid === 'duguilan') return ''; // Дугуйлан бол автомат баннер харагдахгүй
   const levelMap = { baga:1, dund:2, ahlah:3, beltgel:4 };
   const lvl = levelMap[gid] || 1;
+  const monHash = tab === 'monthly' ? `#${lvl}-9` : `#${lvl}`;
   if (tab === 'yearly') {
     return `
       <a href="plan.html#${lvl}" target="_blank" style="text-decoration:none;color:inherit">

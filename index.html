@@ -744,23 +744,44 @@ function renderHome() {
 function openSettingsModal() {
   showModal(`
     <h3>⚙️ Тохиргоо</h3>
-    <div class="form-group">
-      <label>Багшийн одоогийн нууц код</label>
-      <input class="input" id="s-old" type="password" placeholder="Одоогийн код">
+    <div style="background:#fce7f3;padding:12px 14px;border-radius:10px;margin-bottom:14px">
+      <h4 style="font-size:13px;margin-bottom:10px;color:#be185d">👩‍🏫 Багшийн нууц код солих</h4>
+      <div class="form-group" style="margin-bottom:8px">
+        <input class="input" id="s-old" type="password" placeholder="Одоогийн багшийн код">
+      </div>
+      <div class="form-group" style="margin-bottom:8px">
+        <input class="input" id="s-new" type="password" placeholder="Шинэ код (6+ тэмдэгт)">
+      </div>
+      <div class="form-group" style="margin-bottom:0">
+        <input class="input" id="s-new2" type="password" placeholder="Шинэ кодыг давт">
+      </div>
+      <div id="s-err" style="color:var(--danger);font-size:12px;min-height:16px;margin-top:6px"></div>
+      <button class="btn btn-sm" onclick="changePassword()" style="margin-top:6px">💾 Багшийн код хадгалах</button>
     </div>
-    <div class="form-group">
-      <label>Шинэ нууц код</label>
-      <input class="input" id="s-new" type="password" placeholder="Шинэ код (доод тал нь 6 тэмдэгт)">
+
+    <div style="background:#dbeafe;padding:12px 14px;border-radius:10px;margin-bottom:14px">
+      <h4 style="font-size:13px;margin-bottom:10px;color:#1e40af">🎓 Арга зүйчийн нууц код солих</h4>
+      <div style="font-size:11px;color:#1e40af;margin-bottom:8px">Одоогийн: <code style="background:white;padding:2px 6px;border-radius:3px">${escapeHTML(METHODIST_PW)}</code></div>
+      <div class="form-group" style="margin-bottom:0">
+        <input class="input" id="s-mnew" type="text" placeholder="Шинэ арга зүйчийн код (6+ тэмдэгт)">
+      </div>
+      <div id="s-merr" style="color:var(--danger);font-size:12px;min-height:16px;margin-top:6px"></div>
+      <button class="btn btn-sm" onclick="changeMethodistPassword()" style="margin-top:6px">💾 Арга зүйчийн код хадгалах</button>
     </div>
-    <div class="form-group">
-      <label>Шинэ нууц код давт</label>
-      <input class="input" id="s-new2" type="password" placeholder="Шинэ кодыг давт">
-    </div>
-    <div id="s-err" style="color:var(--danger);font-size:13px;min-height:18px"></div>
+
     <div class="modal-actions">
       <button class="btn btn-secondary" onclick="closeModal()">Хаах</button>
-      <button class="btn" onclick="changePassword()">Хадгалах</button>
     </div>`);
+}
+async function changeMethodistPassword() {
+  const newPw = document.getElementById("s-mnew").value.trim();
+  const err = document.getElementById("s-merr");
+  if (newPw.length < 6) { err.textContent = "Код 6-с их байх ёстой"; return; }
+  const { error } = await sb.from('settings').upsert({key:'methodist_password', value:newPw});
+  if (error) { err.textContent = "Алдаа: "+error.message; return; }
+  METHODIST_PW = newPw;
+  err.style.color = "#10b981";
+  err.textContent = "✅ Хадгалагдлаа. Шинэ код: " + newPw;
 }
 async function changePassword() {
   const oldPw = document.getElementById("s-old").value;
@@ -3421,7 +3442,9 @@ function renderMethodistHome() {
           <option value="monthly" ${tabFilter==='monthly'?'selected':''}>Сарын</option>
           <option value="lesson" ${tabFilter==='lesson'?'selected':''}>Ээлжит</option>
         </select>
+        ${(groupFilter!=='all'||tabFilter!=='all'||filter!=='pending')?`<button class="btn btn-sm btn-secondary" onclick="state.mGroup='all';state.mTab='all';state.mFilter='all';render()">🗑 Шүүлт цуцлах</button>`:''}
       </div>
+      <div style="font-size:12px;color:var(--muted);margin-top:8px">💡 Одоо: ${filter==='pending'?'⏳ Хүлээж буй':filter==='approved'?'✅ Батласан':'📋 Бүгд'} · ${groupFilter==='all'?'Бүх бүлэг':(GROUPS.find(g=>g.id===groupFilter)?.name||'')} · ${tabFilter==='all'?'Бүх төрөл':(tabFilter==='yearly'?'Жилийн':tabFilter==='monthly'?'Сарын':'Ээлжит')}</div>
     </div>
     ${filtered.length===0?`<div class="empty">Төлөвлөгөө байхгүй</div>`:
     `<div class="lesson-list">${filtered.map(p => {

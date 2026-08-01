@@ -49,8 +49,13 @@
 <body>
 
 <div class="toolbar no-print">
-  <label>Хүүхдийн нэр:
-    <input id="name" value="Б. Тулга" style="width:200px" oninput="updateCert()">
+  <label>Хүүхэд системээс сонгох:
+    <select id="childSel" onchange="pickChild()" style="min-width:200px">
+      <option value="">— Гараар оруулна —</option>
+    </select>
+  </label>
+  <label>Эсвэл гараар:
+    <input id="name" value="Б. Тулга" style="width:180px" oninput="updateCert()">
   </label>
   <label>Түвшин:
     <select id="level" onchange="updateCert()">
@@ -70,10 +75,11 @@
   <label>Огноо:
     <input id="date" type="date" oninput="updateCert()">
   </label>
-  <button class="primary" onclick="openReasonEditor()">📝 Тайлбар засах (дууны нэр г.м)</button>
+  <button class="primary" onclick="openReasonEditor()">📝 Тайлбар засах</button>
   <span style="flex:1"></span>
   <button class="print" onclick="window.print()">🖨 Хэвлэх / PDF</button>
   <button class="dl" onclick="downloadAsWord()">📥 Word татах</button>
+  <button onclick="saveToChild()" style="background:#10b981;color:#fff;border:1px solid #10b981;padding:8px 14px;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">💾 Хүүхдийн ололтод хадгалах</button>
 </div>
 
 <div class="cert-wrap">
@@ -108,7 +114,58 @@
 </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const sb = supabase.createClient("https://dehxrmupnbilwlxsovpi.supabase.co","sb_publishable_VRNBeM9nqwFlrDhT2-wD3w_Gp3O85uy");
+let CHILDREN_LIST = [];
+async function loadChildren() {
+  const { data } = await sb.from('children').select('*').order('name');
+  CHILDREN_LIST = data || [];
+  const sel = document.getElementById("childSel");
+  const groups = {baga:'Бага',dund:'Дунд',ahlah:'Ахлах',beltgel:'Бэлтгэл',duguilan:'Дугуйлан'};
+  sel.innerHTML = '<option value="">— Гараар оруулна —</option>' +
+    CHILDREN_LIST.map(c => `<option value="${c.id}">${c.name} (${groups[c.group_id]||c.group_id})</option>`).join("");
+}
+function pickChild() {
+  const id = document.getElementById("childSel").value;
+  if (!id) return;
+  const c = CHILDREN_LIST.find(x => x.id === id);
+  if (c) { document.getElementById("name").value = c.name; updateCert(); }
+}
+async function saveToChild() {
+  const childId = document.getElementById("childSel").value;
+  if (!childId) { alert("Хүүхэд системээс сонгоно уу — гараар нэрлэсэн хүүхэд ололт хэсэгт хадгалагдахгүй."); return; }
+  const level = document.getElementById("level").value;
+  const cat = document.getElementById("category").value;
+  const catInfo = CATEGORIES[cat];
+  const cupNames = {gold:'🥇 Алтан цом', silver:'🥈 Мөнгөн цом', bronze:'🥉 Хүрэл цом'};
+  const title = `${cupNames[level]} · ${catInfo.name}`;
+  const description = document.getElementById("reasonEl").textContent;
+  const date = document.getElementById("date").value || new Date().toISOString().substring(0,10);
+  const icon = CUPS[level];
+
+  // Upload the certificate as a doc
+  const html = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word"><head><meta charset="UTF-8"><style>' +
+    document.querySelector("style").innerText + '@page{size:A4 landscape;margin:0}' +
+    '</style></head><body>' + document.getElementById("cert").outerHTML + '</body></html>';
+  const blob = new Blob(['﻿'+html], {type:'application/msword;charset=utf-8'});
+  const fname = `${Date.now()}-гэрчилгээ.doc`;
+  const { error: upErr } = await sb.storage.from('media').upload(fname, blob);
+  if (upErr) { alert("Файл хадгалахад алдаа: "+upErr.message); return; }
+  const { data: {publicUrl} } = sb.storage.from('media').getPublicUrl(fname);
+
+  const { error } = await sb.from('achievements').insert({
+    child_id: childId,
+    title: title,
+    description: description,
+    icon: icon,
+    earned_at: date,
+    media: [{ type:'link', src: publicUrl, label: 'Гэрчилгээ (.doc)' }]
+  });
+  if (error) { alert("Алдаа: "+error.message); return; }
+  alert(`✅ Амжилттай! "${document.getElementById("name").value}"-ийн ололт хэсэгт нэмэгдлээ.\n\nСистемийн Хүүхдийн үнэлгээ → сонгосон хүүхэд → 🌟 Ололт, авьяас tab-т харна.`);
+}
+
 const CUPS = { gold:'🥇', silver:'🥈', bronze:'🥉' };
 const CATEGORIES = {
   song: {icon:'🎤', name:'СУРСАН ДУУ', hint:'Энд сурсан дууны нэрийг бичнэ.\nЖишээ: "Туулай", "Найзуудаа зурлаа" г.м'},
@@ -167,5 +224,6 @@ const params = new URLSearchParams(location.search);
 if (params.get("name")) document.getElementById("name").value = params.get("name");
 document.getElementById("date").value = new Date().toISOString().substring(0,10);
 updateCert();
+loadChildren();
 </script>
 </body></html>

@@ -83,7 +83,7 @@ async function saveToSystem() {
   if (!confirm(`${groupNames[lvl]} бүлгийн жилийн матрицыг системд хадгалах уу?\n\nАрга зүйч харах, батлах боломжтой болно.`)) return;
   const html = "<!DOCTYPE html>\n" + document.documentElement.outerHTML;
   const blob = new Blob([html], {type:"text/html;charset=utf-8"});
-  const fname = `${Date.now()}-${gid}-жилийн_матриц.html`;
+  const fname = `${Date.now()}-${gid}-yearly-matrix.html`;
   const { error: upErr } = await sb.storage.from('media').upload(fname, blob);
   if (upErr) { alert("Файл хадгалахад алдаа: "+upErr.message); return; }
   const { data: {publicUrl} } = sb.storage.from('media').getPublicUrl(fname);

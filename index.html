@@ -506,6 +506,7 @@ function render() {
     <header>
       <h1>🎵🎶 ХӨГЖИМ ӨЛЗИЙ ✨</h1>
       <nav>
+        <button class="btn btn-secondary btn-sm" onclick="openSearch()" title="Хайх">🔍</button>
         ${state.role === "teacher" ? `
           <button class="btn btn-secondary btn-sm" onclick="openSettingsModal()" title="Тохиргоо">⚙️</button>
           <button class="btn btn-secondary btn-sm" onclick="exportData()" title="Нөөцлөх">📥</button>
@@ -4652,6 +4653,95 @@ async function deleteEntry(id) {
 }
 
 // ============ EXPORT / IMPORT ============
+// ============ GENERAL SEARCH ============
+function openSearch() {
+  showModal(`
+    <h3>🔍 Ерөнхий хайлт</h3>
+    <input class="input" id="gs-q" placeholder="Хүүхэд, дуу, төлөвлөгөө, зэмсэг г.м..." autofocus oninput="doSearch()">
+    <div id="gs-results" style="max-height:60vh;overflow-y:auto;margin-top:14px"></div>
+    <div class="modal-actions">
+      <button class="btn btn-secondary" onclick="closeModal()">Хаах</button>
+    </div>`);
+  setTimeout(() => document.getElementById("gs-q").focus(), 100);
+}
+function doSearch() {
+  const q = document.getElementById("gs-q").value.trim().toLowerCase();
+  const box = document.getElementById("gs-results");
+  if (q.length < 2) { box.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:12px">Хамгийн багадаа 2 үсэг оруулна уу</div>'; return; }
+  const results = [];
+  for (const gid in CHILDREN) {
+    for (const c of CHILDREN[gid]) {
+      if (c.name.toLowerCase().includes(q)) {
+        const g = GROUPS.find(x=>x.id===gid);
+        results.push({icon:'👦', type:'Хүүхэд', title:c.name, sub:g?g.name:'', action:()=>{state.assessGroup=gid;state.assessChild=c.id;state.assessTab='start';state.view='assessChild';closeModal();render();}});
+      }
+    }
+  }
+  for (const s of (SONG_LIB||[])) {
+    if (s.title.toLowerCase().includes(q) || (s.author||'').toLowerCase().includes(q)) {
+      const ico = s.kind==='song'?'🎤':s.kind==='movement'?'💃':'👂';
+      results.push({icon:ico, type:'Дуу', title:s.title, sub:s.author||'', action:()=>{state.slSearch=q;state.slKind=s.kind;state.view='songlib';closeModal();render();}});
+    }
+  }
+  for (const gid in PLANS) {
+    for (const t of ['yearly','monthly','lesson']) {
+      for (const p of (PLANS[gid][t]||[])) {
+        if ((p.title||'').toLowerCase().includes(q) || (p.content||'').toLowerCase().includes(q)) {
+          const g = GROUPS.find(x=>x.id===gid);
+          const tabName = t==='yearly'?'Жилийн':t==='monthly'?'Сарын':'Ээлжит';
+          results.push({icon:'📋', type:'Төлөвлөгөө', title:p.title, sub:`${g?g.name:''} · ${tabName}`, action:()=>{state.planGroup=gid;state.planTab=t;state.view='plan';closeModal();render();}});
+        }
+      }
+    }
+  }
+  for (const i of (INSTRUMENTS||[])) {
+    if (i.name_mn.toLowerCase().includes(q) || (i.name_en||'').toLowerCase().includes(q)) {
+      results.push({icon:'🎼', type:'Зэмсэг', title:i.name_mn, sub:i.name_en||'', action:()=>{state.view='instruments';closeModal();render();}});
+    }
+  }
+  for (const a of (ANNOUNCEMENTS||[])) {
+    if (a.title.toLowerCase().includes(q) || (a.text||'').toLowerCase().includes(q)) {
+      results.push({icon:'📢', type:'Зар мэдээ', title:a.title, sub:a.event_date||'', action:()=>{state.view='announcements';closeModal();render();}});
+    }
+  }
+  for (const t of (TASKS||[])) {
+    if ((t.title||'').toLowerCase().includes(q) || (t.description||'').toLowerCase().includes(q)) {
+      results.push({icon:'📌', type:'Үүрэг', title:t.title, sub:t.category||'', action:()=>{state.view='tasks';closeModal();render();}});
+    }
+  }
+  for (const e of (EVENTS||[])) {
+    if (e.title.toLowerCase().includes(q) || (e.description||'').toLowerCase().includes(q)) {
+      results.push({icon:'🎭', type:'Тоглолт', title:e.title, sub:e.event_date||'', action:()=>{state.view='events';closeModal();render();}});
+    }
+  }
+  for (const d of (DIARY||[])) {
+    if ((d.title||'').toLowerCase().includes(q) || (d.text||'').toLowerCase().includes(q)) {
+      results.push({icon:'📔', type:'Тэмдэглэл', title:d.title||d.entry_date, sub:d.entry_date, action:()=>{state.view='diary';closeModal();render();}});
+    }
+  }
+  for (const m of (METHODIST_NOTES||[])) {
+    if (m.title.toLowerCase().includes(q) || (m.text||'').toLowerCase().includes(q)) {
+      results.push({icon:'🎓', type:'Арга зүйч', title:m.title, sub:m.from_name||'', action:()=>{state.view='methodist';closeModal();render();}});
+    }
+  }
+  if (results.length === 0) {
+    box.innerHTML = '<div style="text-align:center;padding:30px;color:var(--muted)"><div style="font-size:36px">🔍</div><div style="margin-top:8px">"'+escapeHTML(q)+'" олдсонгүй</div></div>';
+    return;
+  }
+  window._srch = results.map(r => r.action);
+  box.innerHTML = `<div style="font-size:12px;color:var(--muted);margin-bottom:8px">${results.length} үр дүн олдлоо</div>` +
+    results.slice(0,50).map((r, i) => `
+      <div onclick="_srch[${i}]()" style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;display:flex;gap:10px;align-items:center;border-radius:8px" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background=''">
+        <div style="font-size:22px">${r.icon}</div>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;color:var(--muted)">${r.type}</div>
+          <div style="font-weight:600;font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(r.title)}</div>
+          ${r.sub?`<div style="font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHTML(r.sub)}</div>`:''}
+        </div>
+        <div style="color:var(--muted)">→</div>
+      </div>`).join("");
+}
+
 async function exportData() {
   const [l,p,c,a] = await Promise.all([
     sb.from('lessons').select('*'), sb.from('plans').select('*'),

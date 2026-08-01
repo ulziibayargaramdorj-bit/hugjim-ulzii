@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="mn"><head><meta charset="UTF-8">
-<title>Гэрчилгээ үүсгэгч · Хөгжим Өлзий</title>
+<title>Ололт амжилтын эзэд · Хөгжим Өлзий</title>
 <style>
   @page { size: A4 landscape; margin: 0; }
   * { box-sizing: border-box; margin:0; padding:0 }
@@ -15,23 +15,29 @@
 
   .cert-wrap { max-width:1100px; margin:0 auto; }
   .cert { width: 297mm; max-width: 100%; aspect-ratio: 297/210; background:white; margin: 0 auto; position:relative; overflow:hidden; box-shadow: 0 8px 30px rgba(0,0,0,0.15); border-radius:8px }
-  .cert-inner { position:absolute; inset:15mm; border:3px double #7c3aed; border-radius:8px; padding: 12mm; display:flex; flex-direction:column; align-items:center; text-align:center }
-  .cert-corner { position:absolute; width:60px; height:60px; opacity:0.6 }
-  .cert-corner.tl { top:8mm; left:8mm; }
-  .cert-corner.tr { top:8mm; right:8mm; }
-  .cert-corner.bl { bottom:8mm; left:8mm; }
-  .cert-corner.br { bottom:8mm; right:8mm; }
-  .cert-bg { position:absolute; inset:0; opacity:0.05; font-size:400px; display:flex; align-items:center; justify-content:center; pointer-events:none }
+  .cert.gold { background: linear-gradient(135deg, #fef9c3, #fef3c7, #fde68a); }
+  .cert.silver { background: linear-gradient(135deg, #f1f5f9, #e2e8f0, #cbd5e1); }
+  .cert.bronze { background: linear-gradient(135deg, #fef3c7, #fde68a, #d97706); background: linear-gradient(135deg, #fef3c7, #fed7aa, #f97316); }
+  .cert-inner { position:absolute; inset:12mm; border:4px double #7c3aed; border-radius:8px; padding: 10mm; display:flex; flex-direction:column; align-items:center; text-align:center }
+  .cert.gold .cert-inner { border-color:#ca8a04 }
+  .cert.silver .cert-inner { border-color:#64748b }
+  .cert.bronze .cert-inner { border-color:#c2410c }
+  .cert-corner { position:absolute; width:60px; height:60px; opacity:0.5; font-size:44px }
+  .cert-corner.tl { top:6mm; left:6mm; }
+  .cert-corner.tr { top:6mm; right:6mm; }
+  .cert-corner.bl { bottom:6mm; left:6mm; }
+  .cert-corner.br { bottom:6mm; right:6mm; }
 
-  .cert-header { font-size: 14pt; color:#7c3aed; letter-spacing:3px; margin-bottom:4mm; font-weight:600 }
-  .cert-title { font-size: 42pt; font-weight:800; background:linear-gradient(135deg,#be185d,#7c3aed,#0891b2); -webkit-background-clip:text; background-clip:text; color:transparent; margin-bottom:6mm; letter-spacing:2px }
-  .cert-sub { font-size:12pt; color:#6b7280; margin-bottom:8mm; font-style:italic }
-  .cert-award { font-size:14pt; color:#374151; margin-bottom:6mm }
-  .cert-name { font-size:36pt; font-weight:700; color:#111827; margin: 4mm 0 6mm; padding: 2mm 20mm; border-bottom:2px solid #ec4899; font-family: "Georgia", serif; }
-  .cert-reason { font-size:14pt; color:#374151; max-width: 220mm; line-height:1.6; margin-bottom:auto; padding: 4mm; background:#faf5ff; border-radius:6px }
-  .cert-footer { display:flex;justify-content:space-between;width:100%;margin-top:8mm;padding-top:6mm;border-top:1px dashed #d1d5db;font-size:11pt;color:#4b5563 }
+  .cert-header { font-size: 22pt; letter-spacing:6px; margin-bottom:2mm; font-weight:800; background:linear-gradient(135deg,#be185d,#7c3aed,#0891b2); -webkit-background-clip:text; background-clip:text; color:transparent }
+  .cert-sub { font-size:11pt; color:#6b7280; margin-bottom:4mm; letter-spacing:2px }
+  .cert-cup { font-size: 80pt; line-height:1; margin: 2mm 0; filter: drop-shadow(0 4px 8px rgba(0,0,0,0.2)) }
+  .cert-category { font-size:16pt; color:#374151; margin-bottom:3mm; font-weight:600; letter-spacing:1px }
+  .cert-name { font-size:32pt; font-weight:700; color:#111827; margin: 3mm 0 4mm; padding: 2mm 20mm; border-bottom:2px solid #ec4899; font-family: "Georgia", serif; }
+  .cert-award-text { font-size:12pt; color:#4b5563; margin-bottom:3mm }
+  .cert-reason { font-size:13pt; color:#374151; max-width: 220mm; line-height:1.5; margin-bottom:auto; padding: 4mm 6mm; background:rgba(255,255,255,0.75); border-radius:8px; backdrop-filter:blur(4px); font-style:italic }
+  .cert-footer { display:flex;justify-content:space-between;width:100%;margin-top:6mm;padding-top:4mm;border-top:1px dashed #6b7280;font-size:10pt;color:#4b5563 }
   .cert-sig { text-align:center;min-width:60mm }
-  .cert-sig .line { border-top:1px solid #4b5563;padding-top:2mm;margin-top:10mm;font-size:10pt }
+  .cert-sig .line { border-top:1px solid #4b5563;padding-top:1mm;margin-top:6mm;font-size:10pt }
 
   @media print {
     body { padding:0; background:white; }
@@ -44,55 +50,54 @@
 
 <div class="toolbar no-print">
   <label>Хүүхдийн нэр:
-    <input id="name" value="Б. Тулга" style="width:200px">
+    <input id="name" value="Б. Тулга" style="width:200px" oninput="updateCert()">
   </label>
-  <label>Ямар шагнал:
-    <select id="template" onchange="applyTemplate()">
-      <option value="best-singer">🎤 Шилдэг дуучин</option>
-      <option value="best-dancer">💃 Шилдэг бүжигчин</option>
-      <option value="best-rhythm">🥁 Хэмнэл эзэмшигч</option>
-      <option value="active">⭐ Идэвхтэй суралцагч</option>
-      <option value="most-improved">📈 Хамгийн их сайжирсан</option>
-      <option value="teamwork">🤝 Хамтын ажиллагаа</option>
-      <option value="creative">🎨 Бүтээлч сэтгэлгээтэй</option>
-      <option value="graduation">🎓 Бэлтгэл бүлэг төгсөгч</option>
-      <option value="custom">✏️ Өөрөө бичих</option>
+  <label>Түвшин:
+    <select id="level" onchange="updateCert()">
+      <option value="gold">🥇 Алтан цом</option>
+      <option value="silver">🥈 Мөнгөн цом</option>
+      <option value="bronze">🥉 Хүрэл цом</option>
     </select>
   </label>
-  <label>Гарчиг:
-    <input id="award" value="ШИЛДЭГ ДУУЧИН" style="width:220px">
+  <label>Төрөл:
+    <select id="category" onchange="updateCert()">
+      <option value="song">🎤 Сурсан дуу</option>
+      <option value="dance">💃 Хөгжимт хөдөлгөөн</option>
+      <option value="rhythm">🥁 Хэмнэл</option>
+      <option value="actor">🎭 Бяцхан жүжигчин</option>
+    </select>
   </label>
   <label>Огноо:
-    <input id="date" type="date">
+    <input id="date" type="date" oninput="updateCert()">
   </label>
-  <button class="primary" onclick="openReasonEditor()">📝 Тайлбар засах</button>
+  <button class="primary" onclick="openReasonEditor()">📝 Тайлбар засах (дууны нэр г.м)</button>
   <span style="flex:1"></span>
   <button class="print" onclick="window.print()">🖨 Хэвлэх / PDF</button>
   <button class="dl" onclick="downloadAsWord()">📥 Word татах</button>
 </div>
 
 <div class="cert-wrap">
-<div class="cert" id="cert">
-  <div class="cert-bg">🏆</div>
+<div class="cert gold" id="cert">
   <div class="cert-corner tl">🎵</div>
   <div class="cert-corner tr">🎶</div>
   <div class="cert-corner bl">🎼</div>
   <div class="cert-corner br">🎤</div>
   <div class="cert-inner">
-    <div class="cert-header">✨ ХӨГЖМИЙН СУРГАЛТЫН ГЭРЧИЛГЭЭ ✨</div>
-    <div class="cert-title" id="titleEl">ШИЛДЭГ ДУУЧИН</div>
+    <div class="cert-header">ОЛОЛТ АМЖИЛТЫН ЭЗЭД</div>
     <div class="cert-sub">2026-2027 оны хичээлийн жил</div>
-    <div class="cert-award">Энэхүү гэрчилгээг</div>
+    <div class="cert-cup" id="cupEl">🥇</div>
+    <div class="cert-category" id="catEl">🎤 СУРСАН ДУУ</div>
+    <div class="cert-award-text">Энэхүү гэрчилгээг</div>
     <div class="cert-name" id="nameEl">Б. Тулга</div>
-    <div class="cert-award">-д гардуулан олгож байна</div>
-    <div class="cert-reason" id="reasonEl">Хөгжмийн хичээлд идэвх зүтгэлтэй хандаж, шинэ дуу сурах, хамтын тоглолтод оролцох зэргээр онцгой амжилт үзүүлсэнд талархан гардуулж байна.</div>
+    <div class="cert-award-text">-д гардуулан олгож байна</div>
+    <div class="cert-reason" id="reasonEl">Тайлбар оруулна уу... (дууны нэр, ур чадвар г.м)</div>
     <div class="cert-footer">
       <div class="cert-sig">
         <div style="font-size:9pt;color:#6b7280">Огноо</div>
         <div class="line" id="dateEl">2026 оны 05-р сарын 30</div>
       </div>
       <div style="text-align:center">
-        <div style="font-size:32pt;margin-bottom:2mm">🏆</div>
+        <div style="font-size:24pt;margin-bottom:1mm">✨</div>
       </div>
       <div class="cert-sig">
         <div style="font-size:9pt;color:#6b7280">Хөгжмийн багш</div>
@@ -104,45 +109,43 @@
 </div>
 
 <script>
-const TEMPLATES = {
-  'best-singer': {title:'ШИЛДЭГ ДУУЧИН', reason:'Хөгжмийн хичээлд хоолойгоо зөв ашиглаж, шинэ дуу сурч, хамтын тоглолтод идэвхтэй оролцсонд талархан энэхүү гэрчилгээг гардуулав.'},
-  'best-dancer': {title:'ШИЛДЭГ БҮЖИГЧИН', reason:'Хөгжимт хөдөлгөөн, бүжгийг мэдрэмжтэй гүйцэтгэж, найрсаг зохион байгуулалттай хамтын бүжгийн тоглолтод амжилт үзүүлсэнд гардуулав.'},
-  'best-rhythm': {title:'ХЭМНЭЛ ЭЗЭМШИГЧ', reason:'Хөгжмийн хэмнэлийг цэвэр мэдрэн, хэмнэлт зэмсэг хосолсон найрал тоглолтод амжилттай оролцсонд гардуулав.'},
-  'active': {title:'ИДЭВХТЭЙ СУРАЛЦАГЧ', reason:'Хөгжмийн хичээлд тогтмол идэвхтэй оролцож, шинэ мэдлэгийг сурч эзэмших хүсэл зоригтой, найз нөхөдтөө үлгэрлэн ажилласанд гардуулав.'},
-  'most-improved': {title:'ХАМГИЙН ИХ САЙЖИРСАН', reason:'Хичээлийн жилийн турш дуу, хэмнэл, хөдөлгөөний бүх талаар мэдэгдэхүйц ахиц гарган ажилласанд гардуулав.'},
-  'teamwork': {title:'ХАМТЫН АЖИЛЛАГААНЫ ХИЧЭЭЛ', reason:'Багаараа тоглох, дуу дуулах, дүрд тоглох үйл ажиллагаанд найз нөхдөө дэмжин, найрсаг хамтын ажиллагаа үзүүлсэнд гардуулав.'},
-  'creative': {title:'БҮТЭЭЛЧ СЭТГЭЛГЭЭТЭЙ', reason:'Дуу, хөдөлгөөн, дүрийг өөрийн төсөөллөөр зохион бүтээж, бусдаас ялгарах бүтээлч ур чадвар үзүүлсэнд гардуулав.'},
-  'graduation': {title:'БЭЛТГЭЛ БҮЛЭГ ТӨГСӨГЧ', reason:'Цэцэрлэгийн бэлтгэл бүлгийн хөгжмийн хөтөлбөрийг амжилттай эзэмшиж, ерөнхий боловсролын сургуульд суралцахад бэлэн болсонд гардуулав.'},
-  'custom': {title:'', reason:''}
+const CUPS = { gold:'🥇', silver:'🥈', bronze:'🥉' };
+const CATEGORIES = {
+  song: {icon:'🎤', name:'СУРСАН ДУУ', hint:'Энд сурсан дууны нэрийг бичнэ.\nЖишээ: "Туулай", "Найзуудаа зурлаа" г.м'},
+  dance: {icon:'💃', name:'ХӨГЖИМТ ХӨДӨЛГӨӨН', hint:'Энд хийсэн хөгжимт хөдөлгөөн, бүжгийн нэр.\nЖишээ: "Тойрон бүжиг", "Найзууд" г.м'},
+  rhythm: {icon:'🥁', name:'ХЭМНЭЛ', hint:'Энд эзэмшсэн хэмнэлийн ур чадварын тухай.\nЖишээ: "2/4, 3/4 хэмнэлийг зэмсгээр зөв тоглох" г.м'},
+  actor: {icon:'🎭', name:'БЯЦХАН ЖҮЖИГЧИН', hint:'Энд тоглосон дүрийн тухай.\nЖишээ: "Улаан Малгайт", "Бяцхан цэцэг" г.м'}
 };
 
-function applyTemplate() {
-  const t = document.getElementById("template").value;
-  const tpl = TEMPLATES[t];
-  if (tpl.title) document.getElementById("award").value = tpl.title;
-  document.getElementById("titleEl").textContent = tpl.title || 'ГЭРЧИЛГЭЭ';
-  document.getElementById("reasonEl").textContent = tpl.reason || 'Тайлбар оруулна уу...';
-}
 function updateCert() {
-  document.getElementById("nameEl").textContent = document.getElementById("name").value || '.....';
-  document.getElementById("titleEl").textContent = document.getElementById("award").value || 'ГЭРЧИЛГЭЭ';
+  const name = document.getElementById("name").value || '.....';
+  const level = document.getElementById("level").value;
+  const cat = document.getElementById("category").value;
   const d = document.getElementById("date").value;
+  const cert = document.getElementById("cert");
+  cert.className = 'cert ' + level;
+  document.getElementById("cupEl").textContent = CUPS[level];
+  document.getElementById("catEl").textContent = `${CATEGORIES[cat].icon} ${CATEGORIES[cat].name}`;
+  document.getElementById("nameEl").textContent = name;
   if (d) {
     const parts = d.split("-");
     document.getElementById("dateEl").textContent = `${parts[0]} оны ${parseInt(parts[1])}-р сарын ${parseInt(parts[2])}`;
   }
 }
 function openReasonEditor() {
+  const cat = document.getElementById("category").value;
   const current = document.getElementById("reasonEl").textContent;
+  const isPlaceholder = current.includes('Тайлбар оруулна уу');
   const modal = document.createElement("div");
   modal.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:1000;display:flex;align-items:center;justify-content:center;padding:20px";
   modal.innerHTML = `
     <div style="background:white;padding:24px;border-radius:12px;max-width:600px;width:100%" onclick="event.stopPropagation()">
-      <h3 style="margin-bottom:14px">📝 Гэрчилгээний тайлбар</h3>
-      <textarea id="re" style="width:100%;min-height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px">${current.replace(/</g,'&lt;')}</textarea>
+      <h3 style="margin-bottom:6px">📝 Гэрчилгээний тайлбар</h3>
+      <p style="font-size:12px;color:#6b7280;margin-bottom:14px;white-space:pre-line">${CATEGORIES[cat].hint}</p>
+      <textarea id="re" style="width:100%;min-height:150px;padding:10px;border:1px solid #ddd;border-radius:8px;font-family:inherit;font-size:14px">${isPlaceholder?'':current.replace(/</g,'&lt;')}</textarea>
       <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:14px">
         <button onclick="this.closest('div[style*=fixed]').remove()" style="padding:8px 16px;background:#f3f4f6;border:none;border-radius:6px;cursor:pointer">Болих</button>
-        <button onclick="document.getElementById('reasonEl').textContent=document.getElementById('re').value;this.closest('div[style*=fixed]').remove()" style="padding:8px 16px;background:#10b981;color:white;border:none;border-radius:6px;cursor:pointer">💾 Хадгалах</button>
+        <button onclick="document.getElementById('reasonEl').textContent=document.getElementById('re').value||'...';this.closest('div[style*=fixed]').remove()" style="padding:8px 16px;background:#10b981;color:white;border:none;border-radius:6px;cursor:pointer">💾 Хадгалах</button>
       </div>
     </div>`;
   modal.onclick = () => modal.remove();
@@ -160,15 +163,9 @@ function downloadAsWord() {
   a.click();
   URL.revokeObjectURL(url);
 }
-// URL params: ?name=...&type=...
 const params = new URLSearchParams(location.search);
 if (params.get("name")) document.getElementById("name").value = params.get("name");
-if (params.get("type") && TEMPLATES[params.get("type")]) document.getElementById("template").value = params.get("type");
 document.getElementById("date").value = new Date().toISOString().substring(0,10);
-document.getElementById("name").addEventListener("input", updateCert);
-document.getElementById("award").addEventListener("input", updateCert);
-document.getElementById("date").addEventListener("input", updateCert);
-applyTemplate();
 updateCert();
 </script>
 </body></html>

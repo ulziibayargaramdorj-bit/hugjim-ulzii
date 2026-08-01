@@ -161,7 +161,7 @@ async function saveToChild() {
     document.querySelector("style").innerText + '@page{size:A4 landscape;margin:0}' +
     '</style></head><body>' + document.getElementById("cert").outerHTML + '</body></html>';
   const blob = new Blob(['﻿'+html], {type:'application/msword;charset=utf-8'});
-  const fname = `${Date.now()}-гэрчилгээ.doc`;
+  const fname = `${Date.now()}-certificate.doc`;
   const { error: upErr } = await sb.storage.from('media').upload(fname, blob);
   if (upErr) { alert("Файл хадгалахад алдаа: "+upErr.message); return; }
   const { data: {publicUrl} } = sb.storage.from('media').getPublicUrl(fname);

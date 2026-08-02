@@ -127,8 +127,9 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js" onerror="0"></script>
 <script>
-const sb = supabase.createClient("https://dehxrmupnbilwlxsovpi.supabase.co","sb_publishable_VRNBeM9nqwFlrDhT2-wD3w_Gp3O85uy");
+const sb = supabase.createClient(window.SUPABASE_URL || "https://dehxrmupnbilwlxsovpi.supabase.co", window.SUPABASE_KEY || "sb_publishable_VRNBeM9nqwFlrDhT2-wD3w_Gp3O85uy");
 let CHILDREN_LIST = [];
 async function loadChildren() {
   const { data } = await sb.from('children').select('*').order('name');

@@ -50,9 +50,10 @@
 <div id="plan"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="config.js" onerror="0"></script>
 <script>
-const SUPABASE_URL = "https://dehxrmupnbilwlxsovpi.supabase.co";
-const SUPABASE_KEY = "sb_publishable_VRNBeM9nqwFlrDhT2-wD3w_Gp3O85uy";
+const SUPABASE_URL = window.SUPABASE_URL || "https://dehxrmupnbilwlxsovpi.supabase.co";
+const SUPABASE_KEY = window.SUPABASE_KEY || "sb_publishable_VRNBeM9nqwFlrDhT2-wD3w_Gp3O85uy";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 let EDIT_MODE = false;
 let OVERRIDES = { 1:[], 2:[], 3:[], 4:[] };

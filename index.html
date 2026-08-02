@@ -115,10 +115,12 @@
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="config.js" onerror="console.log('config.js байхгүй - default utga uses')"></script>
 <script>
 // ============ CONFIG ============
-const SUPABASE_URL = "https://dehxrmupnbilwlxsovpi.supabase.co";
-const SUPABASE_KEY = "sb_publishable_VRNBeM9nqwFlrDhT2-wD3w_Gp3O85uy";
+// config.js байгаа бол таны Supabase тохиргоо ашиглагдана
+const SUPABASE_URL = window.SUPABASE_URL || "https://dehxrmupnbilwlxsovpi.supabase.co";
+const SUPABASE_KEY = window.SUPABASE_KEY || "sb_publishable_VRNBeM9nqwFlrDhT2-wD3w_Gp3O85uy";
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
 const ELEMENTS = [

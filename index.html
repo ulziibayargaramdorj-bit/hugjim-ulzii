@@ -703,9 +703,11 @@ function renderHome() {
       <div class="card c3" style="position:relative" onclick="state.view='tasks';render()">
         ${badge('tasks')}
         <span class="element-icon">📌</span><h3>Үүрэг даалгаврын биелэлт</h3>
-        <p>🗂 Ажлын хэсэг, гүйцэтгэлийн тайлан</p></div><div class="card c4" onclick="window.open('https://ulziibayargaramdorj-bit.github.io/music-library-2026/','_blank')">
-  <span class="element-icon">📥</span><h3>Бэлэн төлөвлөгөөний сан</h3>
-  <p>📄 54 файл · 576 ээлжит · 4 бүлэг · Word + PDF</p></div>
+        <p>🗂 Ажлын хэсэг, гүйцэтгэлийн тайлан</p></div>
+      <div class="card" style="position:relative;cursor:pointer;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border:2px solid #2e7d32" onclick="window.open('https://ulziibayargaramdorj-bit.github.io/music-library-2026/','_blank')">
+        <span class="badge" style="position:absolute;top:12px;right:12px;background:#2e7d32;color:#fff">ШИНЭ</span>
+        <span class="element-icon">📥</span><h3>Бэлэн төлөвлөгөөний сан</h3>
+        <p>📄 54 файл · 576 ээлжит · 4 бүлэг · Word + PDF</p></div>
       <div class="card c4" onclick="state.view='assessGroups';render()">
         <span class="element-icon">📊</span><h3>Хүүхдийн хөгжлийн үнэлгээ</h3>
         <p>🌱📈🏆 Гараа, явц, үр дүн, шалгуур</p></div>
@@ -1057,14 +1059,7 @@ function renderPlanGroups() {
         </div>
       </a>
     </div>
-<a href="https://ulziibayargaramdorj-bit.github.io/music-library-2026/" target="_blank" style="text-decoration:none;color:inherit">
-  <div class="card" style="cursor:pointer;background:linear-gradient(135deg,#e8f5e9,#c8e6c9);border:2px solid #2e7d32">
-    <span class="element-icon">📥</span>
-    <h3>Бэлэн төлөвлөгөөний сан</h3>
-    <p>📄 54 файл · 576 ээлжит хичээл · 4 бүлэг · Word + PDF</p>
-    <span class="badge" style="background:#2e7d32;color:#fff">ШИНЭ</span>
-  </div>
-</a>
+
     <h3 style="font-size:16px;margin-bottom:12px;color:var(--muted)">📝 Гараар засах — бүлэг сонго:</h3>
     <div class="grid">
       ${GROUPS.map(g => `
